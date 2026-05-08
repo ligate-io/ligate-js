@@ -35,7 +35,7 @@ describe('signTransfer', () => {
       amountNano: 1_000_000_000n,
       tokenId: DUMMY_TOKEN,
       nonce: 0n,
-      chainId: 4321n,
+      chainId: 4242n,
       chainHash: DUMMY_CHAIN_HASH,
     })
     // Transaction::V0 discriminant
@@ -81,7 +81,7 @@ describe('signTransfer', () => {
       amountNano: 42n,
       tokenId: DUMMY_TOKEN,
       nonce: 7n,
-      chainId: 4321n,
+      chainId: 4242n,
       chainHash: DUMMY_CHAIN_HASH,
     })
 

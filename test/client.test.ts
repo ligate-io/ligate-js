@@ -135,3 +135,115 @@ describe('LigateClient.getBalance', () => {
     expect(await client.getBalance('lig1abc', LGT_TOKEN_ID)).toBe(0n)
   })
 })
+
+/**
+ * Indexer query method URL pinning.
+ *
+ * These tests assert that LigateClient hits the URL paths documented
+ * by ligate-api's handlers (`/v1/blocks*`, `/v1/txs*`,
+ * `/v1/addresses/*`, `/v1/schemas*`, `/v1/attestor-sets/*`). If
+ * ligate-api changes a route here without bumping the SDK, CI
+ * catches it via these stubs.
+ *
+ * Response shapes are not pinned (ligate-api returns 501 placeholders
+ * until issue #1 lands); the tests just verify the request URL.
+ */
+describe('LigateClient indexer query methods', () => {
+  function captureUrl(): { fetch: typeof fetch; url: () => string } {
+    let observed = ''
+    const fetchImpl = stubFetch((url) => {
+      observed = url
+      return jsonResponse({})
+    })
+    return { fetch: fetchImpl, url: () => observed }
+  }
+
+  it('listBlocks hits /v1/blocks (no query when params absent)', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.listBlocks()
+    expect(url()).toBe('http://x:1/v1/blocks')
+  })
+
+  it('listBlocks forwards limit + before as query params', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.listBlocks({ limit: 50, before: 'h:12345' })
+    // url-encoding of `:` is %3A; assert via decoded form to keep the
+    // expectation readable.
+    const decoded = decodeURIComponent(url())
+    expect(decoded).toBe('http://x:1/v1/blocks?limit=50&before=h:12345')
+  })
+
+  it('getBlock(height) hits /v1/blocks/{height}', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.getBlock(42)
+    expect(url()).toBe('http://x:1/v1/blocks/42')
+  })
+
+  it('getBlock accepts bigint heights (chain heights are u64)', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.getBlock(9_007_199_254_740_993n)
+    expect(url()).toBe('http://x:1/v1/blocks/9007199254740993')
+  })
+
+  it('listTxs hits /v1/txs', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.listTxs({ limit: 10 })
+    expect(url()).toBe('http://x:1/v1/txs?limit=10')
+  })
+
+  it('getTx hits /v1/txs/{hash}', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.getTx('0xdeadbeef')
+    expect(url()).toBe('http://x:1/v1/txs/0xdeadbeef')
+  })
+
+  it('getAddressSummary hits /v1/addresses/{addr}', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.getAddressSummary('lig132yw8ht5p8cetl2jmvknewjawt9xwzdlrk2pyxlnwjyqz3m499u')
+    expect(url()).toBe(
+      'http://x:1/v1/addresses/lig132yw8ht5p8cetl2jmvknewjawt9xwzdlrk2pyxlnwjyqz3m499u',
+    )
+  })
+
+  it('listSchemas hits /v1/schemas', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.listSchemas()
+    expect(url()).toBe('http://x:1/v1/schemas')
+  })
+
+  it('getSchema hits /v1/schemas/{id}', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.getSchema('lsc1abc')
+    expect(url()).toBe('http://x:1/v1/schemas/lsc1abc')
+  })
+
+  it('getAttestorSet hits /v1/attestor-sets/{id}', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.getAttestorSet('las1abc')
+    expect(url()).toBe('http://x:1/v1/attestor-sets/las1abc')
+  })
+
+  it('passes a generic response type through getJson', async () => {
+    interface MockSchema {
+      id: string
+      name: string
+    }
+    const fetchImpl = stubFetch(() =>
+      jsonResponse({ id: 'lsc1abc', name: 'themisra.proof-of-prompt' }),
+    )
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    const schema = await client.getSchema<MockSchema>('lsc1abc')
+    // Strict-typed access proves the generic flowed through.
+    expect(schema.name).toBe('themisra.proof-of-prompt')
+  })
+})

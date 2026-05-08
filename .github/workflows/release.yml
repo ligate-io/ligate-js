@@ -127,17 +127,51 @@ jobs:
           echo "Publishing under dist-tag: ${DIST_TAG}"
           pnpm publish --no-git-checks --access public --provenance --tag "${DIST_TAG}"
 
+      # Extract the matching version section out of CHANGELOG.md so the
+      # GitHub Release body shows the same notes that ship in the repo.
+      # Emits everything between `## [X.Y.Z] - ...` and the next
+      # top-level `## [` section, then prepends the npm install line.
+      # If CHANGELOG.md is missing or doesn't have a section for this
+      # version, falls back to the one-liner so the release step still
+      # creates *something* useful.
+      - name: Build release notes from CHANGELOG.md
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        id: notes
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          NOTES_FILE="$(mktemp)"
+          {
+            echo "\`\`\`bash"
+            echo "npm install @ligate-labs/sdk@${VERSION}"
+            echo "\`\`\`"
+            echo ""
+          } > "${NOTES_FILE}"
+
+          if [[ -f CHANGELOG.md ]]; then
+            CHANGELOG_BODY="$(awk -v ver="${VERSION}" '
+              $0 ~ "^## \\[" ver "\\]" { found=1; next }
+              found && /^## \[/ { exit }
+              found { print }
+            ' CHANGELOG.md)"
+            if [[ -n "${CHANGELOG_BODY}" ]]; then
+              echo "${CHANGELOG_BODY}" >> "${NOTES_FILE}"
+            else
+              echo "_See [CHANGELOG.md](https://github.com/ligate-io/ligate-js/blob/main/CHANGELOG.md) for the full changeset._" >> "${NOTES_FILE}"
+            fi
+          else
+            echo "_See [CHANGELOG.md](https://github.com/ligate-io/ligate-js/blob/main/CHANGELOG.md) for the full changeset._" >> "${NOTES_FILE}"
+          fi
+
+          echo "path=${NOTES_FILE}" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          # Pull the `## [Unreleased]` section of CHANGELOG.md (when one
-          # exists) as release notes; if absent, fall back to a
-          # one-liner pointing at the npm install URL.
-          body: |
-            `npm install @ligate-labs/sdk@${{ steps.version.outputs.version }}`
-
-            See [CHANGELOG.md](https://github.com/ligate-io/ligate-js/blob/main/CHANGELOG.md) for the full changeset.
+          body_path: ${{ steps.notes.outputs.path }}
           prerelease: ${{ contains(github.ref_name, '-') }}

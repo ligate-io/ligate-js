@@ -22,6 +22,16 @@
  *   `{ id: <tx_hash>, status: ... }`.
  */
 
+import {
+  signRegisterAttestorSet,
+  signRegisterSchema,
+  signSubmitAttestation,
+} from './attestation.js'
+import type {
+  SignRegisterAttestorSetParams,
+  SignRegisterSchemaParams,
+  SignSubmitAttestationParams,
+} from './attestation.js'
 import { LigateClient } from './client.js'
 import type { LigateClientOptions } from './client.js'
 import { signTransfer } from './transaction.js'
@@ -67,16 +77,7 @@ export interface SubmitResult {
 export async function submitTransfer(params: SubmitTransferParams): Promise<SubmitResult> {
   const client = new LigateClient(params)
   const bytes = signTransfer(params)
-  // Build the options object without setting undefined properties —
-  // `exactOptionalPropertyTypes: true` treats `{ x: undefined }` as
-  // distinct from `{}`, so spread-only-when-defined keeps the call
-  // shape clean.
-  const options: SubmitRawTxOptions = {
-    waitForInclusion: params.waitForInclusion ?? true,
-  }
-  if (params.pollIntervalMs !== undefined) options.pollIntervalMs = params.pollIntervalMs
-  if (params.timeoutMs !== undefined) options.timeoutMs = params.timeoutMs
-  return submitRawTx(client, bytes, options)
+  return submitRawTx(client, bytes, submitOptionsFrom(params))
 }
 
 /** Options accepted by [`submitRawTx`]. */
@@ -84,6 +85,103 @@ export interface SubmitRawTxOptions {
   waitForInclusion?: boolean
   pollIntervalMs?: number
   timeoutMs?: number
+}
+
+/**
+ * Inputs to [`submitRegisterAttestorSet`]: everything
+ * [`signRegisterAttestorSet`] needs plus the RPC URL.
+ */
+export interface SubmitRegisterAttestorSetParams
+  extends SignRegisterAttestorSetParams, LigateClientOptions {
+  waitForInclusion?: boolean
+  pollIntervalMs?: number
+  timeoutMs?: number
+}
+
+/**
+ * Build, sign, submit, and (by default) wait for inclusion of a
+ * `RegisterAttestorSet` transaction.
+ *
+ * Convenience wrapper over [`signRegisterAttestorSet`] +
+ * [`submitRawTx`] + [`waitForInclusion`]. The chain stores the set
+ * under the deterministic id from [`deriveAttestorSetId`]; the SDK
+ * leaves that derivation to the caller (so they don't pay for it twice).
+ */
+export async function submitRegisterAttestorSet(
+  params: SubmitRegisterAttestorSetParams,
+): Promise<SubmitResult> {
+  const client = new LigateClient(params)
+  const bytes = signRegisterAttestorSet(params)
+  return submitRawTx(client, bytes, submitOptionsFrom(params))
+}
+
+/**
+ * Inputs to [`submitRegisterSchema`]: everything
+ * [`signRegisterSchema`] needs plus the RPC URL.
+ */
+export interface SubmitRegisterSchemaParams extends SignRegisterSchemaParams, LigateClientOptions {
+  waitForInclusion?: boolean
+  pollIntervalMs?: number
+  timeoutMs?: number
+}
+
+/**
+ * Build, sign, submit, and (by default) wait for inclusion of a
+ * `RegisterSchema` transaction.
+ *
+ * The resulting `schema_id` is `deriveSchemaId(signer_address_bytes,
+ * name, version)` — compute offline if needed before submission.
+ */
+export async function submitRegisterSchema(
+  params: SubmitRegisterSchemaParams,
+): Promise<SubmitResult> {
+  const client = new LigateClient(params)
+  const bytes = signRegisterSchema(params)
+  return submitRawTx(client, bytes, submitOptionsFrom(params))
+}
+
+/**
+ * Inputs to [`submitAttestation`]: everything
+ * [`signSubmitAttestation`] needs plus the RPC URL.
+ */
+export interface SubmitAttestationParams extends SignSubmitAttestationParams, LigateClientOptions {
+  waitForInclusion?: boolean
+  pollIntervalMs?: number
+  timeoutMs?: number
+}
+
+/**
+ * Build, sign, submit, and (by default) wait for inclusion of a
+ * `SubmitAttestation` transaction.
+ *
+ * The attestor signatures inside `params.signatures` must already be
+ * collected off-chain (e.g. by an off-chain quorum service like
+ * Themisra's). This helper packages them for on-chain submission and
+ * signs only the outer Sovereign-SDK envelope.
+ */
+export async function submitAttestation(params: SubmitAttestationParams): Promise<SubmitResult> {
+  const client = new LigateClient(params)
+  const bytes = signSubmitAttestation(params)
+  return submitRawTx(client, bytes, submitOptionsFrom(params))
+}
+
+/**
+ * Project the submit-pipeline knobs (`waitForInclusion`,
+ * `pollIntervalMs`, `timeoutMs`) out of any `Submit*Params`. Avoids
+ * leaking unrelated sign-fields into [`submitRawTx`] and respects
+ * `exactOptionalPropertyTypes` (don't set keys to `undefined`).
+ */
+function submitOptionsFrom(params: {
+  waitForInclusion?: boolean
+  pollIntervalMs?: number
+  timeoutMs?: number
+}): SubmitRawTxOptions {
+  const out: SubmitRawTxOptions = {
+    waitForInclusion: params.waitForInclusion ?? true,
+  }
+  if (params.pollIntervalMs !== undefined) out.pollIntervalMs = params.pollIntervalMs
+  if (params.timeoutMs !== undefined) out.timeoutMs = params.timeoutMs
+  return out
 }
 
 /**

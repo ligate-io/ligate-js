@@ -24,7 +24,7 @@
  *   amountNano: 1_000_000_000n,         // 1 LGT
  *   tokenId: '<32-byte hex>',
  *   nonce,
- *   chainId: 4321n,
+ *   chainId: 4242n,
  *   chainHash: info.chain_hash,
  * })
  * console.log(result.txHash, result.included)
@@ -113,5 +113,19 @@ export { LigateClient, appendV1, DEFAULT_MAX_FEE_NANO } from './client.js'
 export type { LigateClientOptions, RollupInfo, CoinsResponse } from './client.js'
 
 // Submit pipeline.
-export { submitTransfer, submitRawTx, waitForInclusion } from './submit.js'
-export type { SubmitTransferParams, SubmitRawTxOptions, SubmitResult } from './submit.js'
+export {
+  submitTransfer,
+  submitRawTx,
+  submitRegisterAttestorSet,
+  submitRegisterSchema,
+  submitAttestation,
+  waitForInclusion,
+} from './submit.js'
+export type {
+  SubmitTransferParams,
+  SubmitRawTxOptions,
+  SubmitResult,
+  SubmitRegisterAttestorSetParams,
+  SubmitRegisterSchemaParams,
+  SubmitAttestationParams,
+} from './submit.js'

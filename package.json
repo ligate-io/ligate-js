@@ -34,6 +34,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "bundle:browser-check": "esbuild src/index.ts --bundle --platform=browser --target=es2022 --format=esm --outfile=/dev/null",
     "fmt": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"e2e/**/*.ts\"",
     "fmt:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"e2e/**/*.ts\""
   },
@@ -44,6 +45,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.7.0",
+    "esbuild": "^0.24.2",
     "prettier": "^3.3.3",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
