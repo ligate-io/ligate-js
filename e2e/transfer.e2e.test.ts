@@ -64,7 +64,9 @@ const DEV_ADDRESS = 'lig132yw8ht5p8cetl2jmvknewjawt9xwzdlrk2pyxlnwjyqz3m499u'
 
 // Default test config — matches `ligate-chain/devnet/` localnet bring-up.
 const DEFAULT_RPC = 'http://localhost:12346'
-const DEFAULT_CHAIN_ID = 4321n
+// `4242` is the localnet's `CHAIN_ID` baked into `ligate-chain/constants.toml`.
+// Override via `LIGATE_E2E_CHAIN_ID` if pointing the suite at a different chain.
+const DEFAULT_CHAIN_ID = 4242n
 const DEFAULT_TOKEN_ID =
   process.env.LIGATE_E2E_TOKEN_ID ||
   // Localnet $LGT token id — pulled from
@@ -166,7 +168,8 @@ describe('e2e: transfer against localnet', () => {
       timeoutMs: 45_000,
     })
 
-    expect(result.txHash).toMatch(/^[0-9a-fA-F]+$/)
+    // Chain returns hashes with a `0x` prefix; allow it.
+    expect(result.txHash).toMatch(/^(0x)?[0-9a-fA-F]+$/)
     expect(result.included).toBe(true)
     console.log(`[e2e] tx included: ${result.txHash}`)
 
