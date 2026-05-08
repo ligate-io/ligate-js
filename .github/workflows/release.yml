@@ -1,0 +1,142 @@
+name: Release
+
+# Triggered on `v*` tag pushes. Builds the SDK and publishes to npm
+# as `@ligate/sdk` with sigstore provenance attestation.
+#
+# Tagging convention:
+#   - Pre-devnet RC:  `v0.0.X-rc.N` (auto-flagged as pre-release on npm
+#                     via the `--tag rc` distribution tag below)
+#   - At devnet:      `v0.0.1` (paired with the chain's
+#                     `v0.1.0-devnet`; first stable user-installable tag)
+#   - Post-devnet:    `v0.1.0` once the chain's wire format is stable
+#                     and SDK consumers can rely on no breaking changes
+#                     within `0.1.x`.
+#
+# Prereqs (operator-side, one-time):
+#   1. Register `@ligate` org on npm under hello@ligate.io.
+#   2. Generate a granular automation token scoped to `@ligate` /
+#      publish-only. Add as the `NPM_TOKEN` repo secret.
+#   3. Enable OIDC in npm org settings so `--provenance` works without
+#      `id-token: write` permission flips per workflow.
+#
+# Workflow_dispatch runs the build matrix as a dry-run (typecheck +
+# test + build, no publish), useful for verifying the pipeline before
+# tagging.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # `id-token: write` is required for sigstore provenance (`npm publish
+  # --provenance`). Granted at job level rather than workflow level so
+  # the test/build job retains read-only defaults.
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # Need full history for the changelog excerpt step.
+          fetch-depth: 0
+
+      - name: Compute version
+        id: version
+        shell: bash
+        run: |
+          # Tag push: use the tag (e.g. v0.0.1) stripped of leading 'v'.
+          # workflow_dispatch: derive from package.json so dry-runs are
+          # repeatable and obviously not real publishes.
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="$(node -p "require('./package.json').version")-dryrun-${{ github.sha }}"
+            VERSION="${VERSION:0:35}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Version: ${VERSION}"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          # `setup-node` writes an `.npmrc` that points npm publish at
+          # the public registry and authenticates via NODE_AUTH_TOKEN.
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify package.json version matches tag (tag pushes only)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          set -euo pipefail
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          TAG_VERSION="${{ steps.version.outputs.version }}"
+          if [[ "${PKG_VERSION}" != "${TAG_VERSION}" ]]; then
+            echo "::error::package.json version (${PKG_VERSION}) does not match tag (${TAG_VERSION}). Bump package.json before tagging."
+            exit 1
+          fi
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # Publish settings live in package.json's `publishConfig` block
+      # (already set to `access: public`). The `--provenance` flag adds
+      # an OIDC attestation that consumers can verify with `npm audit
+      # signatures`. The `--tag` flag isolates pre-release versions
+      # under the `rc` dist-tag so `npm install @ligate/sdk` (no version)
+      # only resolves to stable releases.
+      - name: Publish to npm
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG_NAME="${{ github.ref_name }}"
+          # Pre-release detection: any tag with a hyphen (rc.N, devnet,
+          # testnet, etc.) goes under the `rc` dist-tag; clean
+          # `vX.Y.Z` tags become `latest`.
+          if [[ "${TAG_NAME}" == *-* ]]; then
+            DIST_TAG=rc
+          else
+            DIST_TAG=latest
+          fi
+          echo "Publishing under dist-tag: ${DIST_TAG}"
+          pnpm publish --no-git-checks --access public --provenance --tag "${DIST_TAG}"
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          # Pull the `## [Unreleased]` section of CHANGELOG.md (when one
+          # exists) as release notes; if absent, fall back to a
+          # one-liner pointing at the npm install URL.
+          body: |
+            `npm install @ligate/sdk@${{ steps.version.outputs.version }}`
+
+            See [CHANGELOG.md](https://github.com/ligate-io/ligate-js/blob/main/CHANGELOG.md) for the full changeset.
+          prerelease: ${{ contains(github.ref_name, '-') }}
