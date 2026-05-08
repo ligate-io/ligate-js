@@ -10,6 +10,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { LigateClient, appendV1 } from '../src/client.js'
+import { tokenIdToHex } from '../src/token.js'
 
 function stubFetch(handler: (url: string, init?: RequestInit) => Response | Promise<Response>) {
   // The cast lets us hand a plain function in where `fetch`'s
@@ -93,24 +94,44 @@ describe('LigateClient.getNonce', () => {
 })
 
 describe('LigateClient.getBalance', () => {
+  // Canonical $LGT gas-token id from the SDK's bank-genesis fixture.
+  // Used as the test token id below — a real bech32m string so the
+  // client's `tokenIdToBech32m` validation round-trip passes.
+  const LGT_TOKEN_ID = 'token_1nyl0e0yweragfsatygt24zmd8jrr2vqtvdfptzjhxkguz2xxx3vs0y07u7'
+
   it('hits /v1/modules/bank/tokens/{token}/balances/{address}', async () => {
     let observedUrl = ''
     const fetchImpl = stubFetch((url) => {
       observedUrl = url
       return jsonResponse({
-        token_id: 'token_1abcdef',
+        token_id: LGT_TOKEN_ID,
         amount: '12345',
       })
     })
     const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
-    const balance = await client.getBalance('lig1abc', 'token_1xyz')
-    expect(observedUrl).toBe('http://x:1/v1/modules/bank/tokens/token_1xyz/balances/lig1abc')
+    const balance = await client.getBalance('lig1abc', LGT_TOKEN_ID)
+    expect(observedUrl).toBe(`http://x:1/v1/modules/bank/tokens/${LGT_TOKEN_ID}/balances/lig1abc`)
     expect(balance).toBe(12345n)
+  })
+
+  it('accepts a hex token id and converts to bech32m for the URL', async () => {
+    let observedUrl = ''
+    const fetchImpl = stubFetch((url) => {
+      observedUrl = url
+      return jsonResponse({ token_id: LGT_TOKEN_ID, amount: '0' })
+    })
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    // Derive the canonical $LGT id's hex form via the helper itself,
+    // so we don't drift if the underlying byte representation changes.
+    const lgtHex = tokenIdToHex(LGT_TOKEN_ID)
+    expect(lgtHex).toMatch(/^[0-9a-f]{64}$/)
+    await client.getBalance('lig1abc', lgtHex)
+    expect(observedUrl).toContain(`/tokens/${LGT_TOKEN_ID}/`)
   })
 
   it('returns 0n on 404 (no recorded balance)', async () => {
     const fetchImpl = stubFetch(() => new Response('', { status: 404 }))
     const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
-    expect(await client.getBalance('lig1abc', 'token_1xyz')).toBe(0n)
+    expect(await client.getBalance('lig1abc', LGT_TOKEN_ID)).toBe(0n)
   })
 })

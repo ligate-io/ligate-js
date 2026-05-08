@@ -40,7 +40,9 @@ const result = await submitTransfer({
   publicKey: sender.publicKey,
   to: 'lig1xyz...',
   amountNano: 1_000_000_000n, // 1 LGT
-  tokenId: '<64-char hex>', // from chain `bank.json` at genesis
+  // tokenId accepts hex, Uint8Array, or `token_1...` bech32m form;
+  // both signing and getBalance normalise internally.
+  tokenId: 'token_1nyl0e0yweragfsatygt24zmd8jrr2vqtvdfptzjhxkguz2xxx3vs0y07u7',
   nonce,
   chainId: 4321n, // from chain `chain_state.json`
   chainHash: info.chain_hash,

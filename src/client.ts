@@ -14,6 +14,7 @@
  */
 
 import { bytesToHex } from './keys.js'
+import { tokenIdToBech32m } from './token.js'
 
 /** Default per-tx fee envelope (nano-LGT). 0.1 LGT — generous for devnet. */
 export const DEFAULT_MAX_FEE_NANO = 100_000_000n
@@ -107,13 +108,14 @@ export class LigateClient {
    * Returns the amount in nano-LGT. Returns `0n` if the chain has no
    * record of the address holding that token.
    *
-   * `tokenId` is the bech32m `token_1...` string form (from chain
-   * `bank.json` at genesis). The chain's REST surface uses bech32m for
-   * URL paths; pass the raw hex form to [`tokenIdHexToBech32m`] first
-   * if that's all you have.
+   * `tokenId` accepts the same three forms as [`signTransfer`]: 64-char
+   * hex string, `Uint8Array` of length 32, or `token_1...` bech32m
+   * string. The chain's REST URLs use the bech32m form, so we
+   * normalise via [`tokenIdToBech32m`] before constructing the request.
    */
-  async getBalance(address: string, tokenId: string): Promise<bigint> {
-    const url = `${this.baseUrl}/modules/bank/tokens/${tokenId}/balances/${address}`
+  async getBalance(address: string, tokenId: string | Uint8Array): Promise<bigint> {
+    const tokenIdBech32 = tokenIdToBech32m(tokenId)
+    const url = `${this.baseUrl}/modules/bank/tokens/${tokenIdBech32}/balances/${address}`
     const res = await this.fetchImpl(url)
     if (res.status === 404) {
       return 0n
