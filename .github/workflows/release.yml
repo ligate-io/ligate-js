@@ -30,10 +30,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  # `contents: write` is required by `softprops/action-gh-release` to
+  # create the matching GitHub Release on tag push.
+  contents: write
   # `id-token: write` is required for sigstore provenance (`npm publish
-  # --provenance`). Granted at job level rather than workflow level so
-  # the test/build job retains read-only defaults.
+  # --provenance`).
   id-token: write
 
 jobs:
