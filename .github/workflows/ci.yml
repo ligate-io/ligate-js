@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fmt:
+    name: prettier --check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm fmt:check
+
+  typecheck:
+    name: tsc --noEmit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+
+  test:
+    name: vitest
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+
+  build:
+    name: tsc build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+  # Single summary check the branch ruleset can require. Mirrors the
+  # pattern from `ligate-io/ligate-chain` and `ligate-io/ligate-cli`.
+  # Gating the ruleset on `CI pass` instead of each underlying job
+  # keeps the required-check name stable as the job set evolves.
+  ci-pass:
+    name: CI pass
+    if: always()
+    needs: [fmt, typecheck, test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required checks
+        env:
+          FMT_RESULT: ${{ needs.fmt.result }}
+          TYPECHECK_RESULT: ${{ needs.typecheck.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          set -euo pipefail
+          fail=0
+          for var in FMT_RESULT TYPECHECK_RESULT TEST_RESULT BUILD_RESULT; do
+            result="${!var}"
+            if [[ "$result" != "success" ]]; then
+              echo "::error::${var,,}: $result"
+              fail=1
+            fi
+          done
+          if [[ $fail -ne 0 ]]; then exit 1; fi
+          echo "All required checks succeeded."
