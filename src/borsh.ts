@@ -44,6 +44,15 @@ export class BorshWriter {
     this.writeByte(v)
   }
 
+  writeU16(v: number): void {
+    if (v < 0 || v > 0xffff) {
+      throw new Error(`u16 out of range: ${v}`)
+    }
+    // Little-endian.
+    this.writeByte(v)
+    this.writeByte(v >>> 8)
+  }
+
   writeU32(v: number): void {
     if (v < 0 || v > 0xffffffff) {
       throw new Error(`u32 out of range: ${v}`)
@@ -77,6 +86,19 @@ export class BorshWriter {
 
   /** Borsh-encode a `Vec<u8>`: 4-byte LE length + bytes. */
   writeVecU8(bytes: Uint8Array): void {
+    this.writeU32(bytes.length)
+    this.writeBytes(bytes)
+  }
+
+  /**
+   * Borsh-encode a `String` / `SafeString`: 4-byte LE length + UTF-8
+   * bytes. The chain enforces an upper-bound length cap on
+   * `SafeString` (default 1024 chars per the SDK's
+   * `SAFE_STRING_DEFAULT_LENGTH`); callers should validate before
+   * passing here.
+   */
+  writeString(s: string): void {
+    const bytes = new TextEncoder().encode(s)
     this.writeU32(bytes.length)
     this.writeBytes(bytes)
   }

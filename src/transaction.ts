@@ -117,8 +117,56 @@ export interface SignTransferParams {
  * `AuthenticatorInput::Standard(...)` itself; do not pre-wrap.
  */
 export function signTransfer(params: SignTransferParams): Uint8Array {
-  const { privateKey, publicKey, to, amountNano, nonce, chainId } = params
+  const { to, amountNano } = params
   const tokenId = tokenIdToBytes(params.tokenId)
+
+  // RuntimeCall::Bank(BankCall::Transfer { to, coins }) bytes only;
+  // the wrap-and-sign helper appends uniqueness + details and signs.
+  const runtimeCall = new BorshWriter()
+  runtimeCall.writeU8(RUNTIME_BANK_DISC)
+  runtimeCall.writeU8(BANK_TRANSFER_DISC)
+  // to: MultiAddress::Standard(28-byte address)
+  const toBytes = decodeAddress(to)
+  runtimeCall.writeU8(ADDR_STANDARD_DISC)
+  runtimeCall.writeFixedBytes(toBytes, 28)
+  // coins:
+  //   amount: u128 LE
+  runtimeCall.writeU128(amountNano)
+  //   token_id: 32 bytes raw
+  runtimeCall.writeFixedBytes(tokenId, 32)
+
+  return wrapAndSign(runtimeCall.bytes(), params)
+}
+
+/**
+ * Common params shared by every `sign*` function: signer keys, nonce,
+ * chain identity, fees. The caller produces the borsh-encoded
+ * `RuntimeCall<S>` bytes; this struct carries everything the
+ * envelope-wrapping + signing path needs.
+ */
+export interface SignEnvelopeParams {
+  privateKey: string | Uint8Array
+  publicKey: Uint8Array
+  nonce: bigint
+  chainId: bigint
+  chainHash: string | Uint8Array
+  maxFeeNano?: bigint
+  maxPriorityFeeBips?: bigint
+}
+
+/**
+ * Append `UniquenessData::Nonce(u64) + TxDetails` to the supplied
+ * `RuntimeCall<S>` bytes, sign over `body || chain_hash`, and wrap
+ * the result in `Transaction::V0(Version0)`.
+ *
+ * Exposed (rather than left private) so consumers building call
+ * variants this SDK doesn't yet ship a typed builder for can
+ * construct the runtime-call bytes themselves and still get the
+ * standard envelope. Most callers should use the typed `sign*`
+ * functions instead.
+ */
+export function wrapAndSign(runtimeCallBytes: Uint8Array, params: SignEnvelopeParams): Uint8Array {
+  const { privateKey, publicKey, nonce, chainId } = params
   const chainHash = bytesArg(params.chainHash, 32, 'chainHash')
   const maxFeeNano = params.maxFeeNano ?? 100_000_000n
   const maxPriorityFeeBips = params.maxPriorityFeeBips ?? 0n
@@ -129,21 +177,8 @@ export function signTransfer(params: SignTransferParams): Uint8Array {
 
   // ---- Build the unsigned-transaction body ----
   // (runtime_call + uniqueness + details, in that order)
-
   const body = new BorshWriter()
-
-  // RuntimeCall::Bank(BankCall::Transfer { to, coins }):
-  body.writeU8(RUNTIME_BANK_DISC)
-  body.writeU8(BANK_TRANSFER_DISC)
-  // to: MultiAddress::Standard(28-byte address)
-  const toBytes = decodeAddress(to)
-  body.writeU8(ADDR_STANDARD_DISC)
-  body.writeFixedBytes(toBytes, 28)
-  // coins:
-  //   amount: u128 LE
-  body.writeU128(amountNano)
-  //   token_id: 32 bytes raw
-  body.writeFixedBytes(tokenId, 32)
+  body.writeBytes(runtimeCallBytes)
 
   // UniquenessData::Nonce(u64):
   body.writeU8(UNIQUENESS_NONCE_DISC)
@@ -179,7 +214,11 @@ export function signTransfer(params: SignTransferParams): Uint8Array {
 }
 
 /** Coerce a `string | Uint8Array` argument to `Uint8Array` of an exact length. */
-function bytesArg(value: string | Uint8Array, expectedLen: number, name: string): Uint8Array {
+export function bytesArg(
+  value: string | Uint8Array,
+  expectedLen: number,
+  name: string,
+): Uint8Array {
   const bytes = typeof value === 'string' ? hexToBytes(value) : value
   if (bytes.length !== expectedLen) {
     throw new Error(`expected ${expectedLen}-byte ${name}, got ${bytes.length}`)
