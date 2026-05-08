@@ -69,8 +69,44 @@ export {
 } from './token.js'
 
 // Transaction builder + signer.
-export { signTransfer } from './transaction.js'
-export type { SignTransferParams } from './transaction.js'
+export { signTransfer, wrapAndSign, bytesArg } from './transaction.js'
+export type { SignTransferParams, SignEnvelopeParams } from './transaction.js'
+
+// Attestation runtime-call builders + id derivations.
+export {
+  RUNTIME_ATTESTATION_DISC,
+  REGISTER_ATTESTOR_SET_DISC,
+  REGISTER_SCHEMA_DISC,
+  SUBMIT_ATTESTATION_DISC,
+  ATTESTOR_SET_HRP,
+  SCHEMA_HRP,
+  PAYLOAD_HASH_HRP,
+  PUBKEY_HRP,
+  ATTESTATION_ID_BYTE_LENGTH,
+  MAX_ATTESTOR_SET_MEMBERS,
+  MAX_ATTESTATION_SIGNATURES,
+  MAX_ATTESTOR_SIGNATURE_BYTES,
+  encodeAttestorSetId,
+  decodeAttestorSetId,
+  encodeSchemaId,
+  decodeSchemaId,
+  encodePayloadHash,
+  decodePayloadHash,
+  encodePubKey,
+  decodePubKey,
+  deriveAttestorSetId,
+  deriveSchemaId,
+  signRegisterAttestorSet,
+  signRegisterSchema,
+  signSubmitAttestation,
+  attestationIdToHex,
+} from './attestation.js'
+export type {
+  AttestorSignature,
+  SignRegisterAttestorSetParams,
+  SignRegisterSchemaParams,
+  SignSubmitAttestationParams,
+} from './attestation.js'
 
 // HTTP client.
 export { LigateClient, appendV1, DEFAULT_MAX_FEE_NANO } from './client.js'
