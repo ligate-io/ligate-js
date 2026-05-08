@@ -1,7 +1,7 @@
 name: Release
 
 # Triggered on `v*` tag pushes. Builds the SDK and publishes to npm
-# as `@ligate/sdk` with sigstore provenance attestation.
+# as `@ligate-labs/sdk` with sigstore provenance attestation.
 #
 # Tagging convention:
 #   - Pre-devnet RC:  `v0.0.X-rc.N` (auto-flagged as pre-release on npm
@@ -13,9 +13,9 @@ name: Release
 #                     within `0.1.x`.
 #
 # Prereqs (operator-side, one-time):
-#   1. Register `@ligate` org on npm under hello@ligate.io.
-#   2. Generate a granular automation token scoped to `@ligate` /
-#      publish-only. Add as the `NPM_TOKEN` repo secret.
+#   1. Register `@ligate-labs` org on npm under hello@ligate.io.
+#   2. Generate a granular automation token scoped to `@ligate-labs`
+#      / publish-only. Add as the `NPM_TOKEN` repo secret.
 #   3. Enable OIDC in npm org settings so `--provenance` works without
 #      `id-token: write` permission flips per workflow.
 #
@@ -136,7 +136,7 @@ jobs:
           # exists) as release notes; if absent, fall back to a
           # one-liner pointing at the npm install URL.
           body: |
-            `npm install @ligate/sdk@${{ steps.version.outputs.version }}`
+            `npm install @ligate-labs/sdk@${{ steps.version.outputs.version }}`
 
             See [CHANGELOG.md](https://github.com/ligate-io/ligate-js/blob/main/CHANGELOG.md) for the full changeset.
           prerelease: ${{ contains(github.ref_name, '-') }}

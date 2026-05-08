@@ -1,15 +1,15 @@
 /**
- * `@ligate/sdk` public surface.
+ * `@ligate-labs/sdk` public surface.
  *
  * One barrel for the things consumers import. Add new public APIs
- * here so downstream `import { ... } from '@ligate/sdk'` keeps
+ * here so downstream `import { ... } from '@ligate-labs/sdk'` keeps
  * working without churn. Keep modules feature-cohesive (keys, address,
  * borsh, transaction, client, submit) and re-export selectively here.
  *
  * Quick start:
  *
  * ```ts
- * import { generateKeypair, submitTransfer, LigateClient } from '@ligate/sdk'
+ * import { generateKeypair, submitTransfer, LigateClient } from '@ligate-labs/sdk'
  *
  * const sender = generateKeypair()
  * const client = new LigateClient({ rpcUrl: 'http://localhost:12346' })

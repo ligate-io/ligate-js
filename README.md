@@ -9,9 +9,9 @@ TypeScript SDK for [Ligate Chain](https://github.com/ligate-io/ligate-chain). Bu
 ### Install
 
 ```bash
-pnpm add @ligate/sdk
-# or: npm install @ligate/sdk
-# or: yarn add @ligate/sdk
+pnpm add @ligate-labs/sdk
+# or: npm install @ligate-labs/sdk
+# or: yarn add @ligate-labs/sdk
 ```
 
 Once published. Until then, the package is installable from the GitHub URL.
@@ -19,7 +19,7 @@ Once published. Until then, the package is installable from the GitHub URL.
 ### Use
 
 ```ts
-import { generateKeypair, LigateClient, submitTransfer } from '@ligate/sdk'
+import { generateKeypair, LigateClient, submitTransfer } from '@ligate-labs/sdk'
 
 // Generate or load a key.
 const sender = generateKeypair()
@@ -65,7 +65,7 @@ import {
   waitForInclusion,
   LigateClient,
   keypairFromPrivateKey,
-} from '@ligate/sdk'
+} from '@ligate-labs/sdk'
 
 const client = new LigateClient({ rpcUrl: 'http://localhost:12346' })
 const sender = keypairFromPrivateKey(process.env.LIGATE_KEY!)
