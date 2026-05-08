@@ -57,6 +57,17 @@ export type { Keypair } from './keys.js'
 // building non-bank transactions).
 export { BorshWriter } from './borsh.js'
 
+// TokenId encoding helpers (hex ↔ bech32m ↔ Uint8Array).
+export {
+  TOKEN_HRP,
+  TOKEN_ID_BYTE_LENGTH,
+  tokenIdToBytes,
+  tokenIdToBech32m,
+  tokenIdToHex,
+  encodeTokenIdBech32m,
+  decodeTokenIdBech32m,
+} from './token.js'
+
 // Transaction builder + signer.
 export { signTransfer } from './transaction.js'
 export type { SignTransferParams } from './transaction.js'

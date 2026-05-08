@@ -61,6 +61,7 @@
 import { decodeAddress } from './address.js'
 import { BorshWriter } from './borsh.js'
 import { hexToBytes, sign } from './keys.js'
+import { tokenIdToBytes } from './token.js'
 
 /** Discriminant for `Transaction::V0`. */
 const TX_V0_DISC = 0x00
@@ -87,7 +88,14 @@ export interface SignTransferParams {
   to: string
   /** Transfer amount in nano-LGT. */
   amountNano: bigint
-  /** Token id, 32 bytes raw (hex string or `Uint8Array`). */
+  /**
+   * Token id, in any of three forms:
+   * - 64-char hex string (with or without `0x` prefix)
+   * - bech32m `token_1...` string (the chain's display form)
+   * - 32-byte `Uint8Array`
+   *
+   * See [`tokenIdToBytes`] for the coercion rules.
+   */
   tokenId: string | Uint8Array
   /** Account nonce. Fetch from `GET /v1/modules/.../nonces` or maintain locally. */
   nonce: bigint
@@ -110,7 +118,7 @@ export interface SignTransferParams {
  */
 export function signTransfer(params: SignTransferParams): Uint8Array {
   const { privateKey, publicKey, to, amountNano, nonce, chainId } = params
-  const tokenId = bytesArg(params.tokenId, 32, 'tokenId')
+  const tokenId = tokenIdToBytes(params.tokenId)
   const chainHash = bytesArg(params.chainHash, 32, 'chainHash')
   const maxFeeNano = params.maxFeeNano ?? 100_000_000n
   const maxPriorityFeeBips = params.maxPriorityFeeBips ?? 0n
