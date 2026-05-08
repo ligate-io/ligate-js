@@ -76,30 +76,41 @@ export class LigateClient {
   /**
    * Fetch the next nonce for a given Ed25519 public key.
    *
-   * The chain's `nonces` module keys nonces by `credential_id`, which
-   * for `MockZkvmCryptoSpec` is the raw 32-byte public key. Returns
-   * `0n` if the address has never sent a transaction (the chain
-   * returns 404 in that case).
+   * Uses the chain's purpose-built dedup endpoint
+   * `GET /v1/rollup/addresses/{credential_id}/dedup` (the `dedup`
+   * action of the `SovereignDeDupEndpoint`). For `MockZkvmCryptoSpec`,
+   * `credential_id` is the raw 32-byte public key hex-encoded.
+   *
+   * Returns `0n` if the address has never sent a transaction (the
+   * endpoint reports `{"nonce": 0}` for un-seen credential ids).
+   *
+   * Note: the upstream Sovereign SDK's `NodeClient::get_nonce_for_public_key`
+   * still hits the legacy `/modules/nonces/state/...` path (the module
+   * has since been renamed to `uniqueness`), so it silently returns 0
+   * even when the on-chain nonce has advanced. This SDK uses the
+   * `/dedup` endpoint instead, which is the documented API surface.
    */
   async getNonce(publicKey: Uint8Array): Promise<bigint> {
     if (publicKey.length !== 32) {
       throw new Error(`expected 32-byte public key, got ${publicKey.length}`)
     }
     const credentialId = bytesToHex(publicKey)
-    const url = `${this.baseUrl}/modules/nonces/state/nonces/items/${credentialId}`
+    const url = `${this.baseUrl}/rollup/addresses/${credentialId}/dedup`
     const res = await this.fetchImpl(url)
     if (res.status === 404) {
-      // Never-sent-a-tx case. The chain treats absent state as "next nonce = 0".
+      // Address has never been seen. The chain treats absent state as nonce = 0.
       return 0n
     }
     if (!res.ok) {
       throw new Error(`GET ${url} failed: ${res.status} ${await res.text()}`)
     }
-    const body = (await res.json()) as { value?: number | string }
-    if (body.value === undefined || body.value === null) {
+    // The dedup endpoint returns {"nonce": <u64>} (or "{generation": <u64>}"
+    // when called with `?select=generation`; we always want the nonce form).
+    const body = (await res.json()) as { nonce?: number | string }
+    if (body.nonce === undefined || body.nonce === null) {
       return 0n
     }
-    return BigInt(body.value)
+    return BigInt(body.nonce)
   }
 
   /**

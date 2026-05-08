@@ -66,15 +66,15 @@ describe('LigateClient.getNonce', () => {
   const pubkey = new Uint8Array(32).fill(0xab)
   const credentialIdHex = 'ab'.repeat(32)
 
-  it('uses the credential-id (hex pubkey) state path', async () => {
+  it('hits the /v1/rollup/addresses/{cred_id}/dedup endpoint', async () => {
     let observedUrl = ''
     const fetchImpl = stubFetch((url) => {
       observedUrl = url
-      return jsonResponse({ value: 42 })
+      return jsonResponse({ nonce: 42 })
     })
     const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
     const nonce = await client.getNonce(pubkey)
-    expect(observedUrl).toBe(`http://x:1/v1/modules/nonces/state/nonces/items/${credentialIdHex}`)
+    expect(observedUrl).toBe(`http://x:1/v1/rollup/addresses/${credentialIdHex}/dedup`)
     expect(nonce).toBe(42n)
   })
 
