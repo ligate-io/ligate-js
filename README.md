@@ -113,12 +113,30 @@ The SDK takes care of these, but they're worth knowing if you're debugging or ex
 ```bash
 pnpm install                # install dependencies
 pnpm typecheck              # tsc --noEmit
-pnpm test                   # vitest run
+pnpm test                   # vitest run (unit suite only, ~400ms)
 pnpm test:watch             # vitest watch mode
+pnpm test:e2e               # vitest e2e (REQUIRES a running localnet — see below)
 pnpm fmt                    # prettier --write
 pnpm fmt:check              # prettier --check (CI gate)
 pnpm build                  # compile to dist/ for publish
 ```
+
+### End-to-end test against a running localnet
+
+`e2e/` is the canary for wire-format drift between the TS SDK and the Rust chain. Stubbed-fetch unit tests pin URL shapes + discriminants, but only running against a real chain catches a borsh field-order mismatch.
+
+```bash
+# Boot a localnet from the chain repo (separate terminal):
+cd ~/Desktop/ligate-chain
+cargo run --bin ligate-node
+
+# Then in this repo:
+pnpm test:e2e
+```
+
+The suite reads chain config from env (`LIGATE_E2E_RPC`, `LIGATE_E2E_CHAIN_ID`, `LIGATE_E2E_TOKEN_ID`); defaults match the chain's localnet config out-of-the-box. If the RPC isn't reachable, every e2e test SKIPS with a clear "boot a localnet first" message rather than failing.
+
+CI runs the unit suite (`pnpm test`) on every PR but does NOT run e2e — opt-in via `pnpm test:e2e` locally before tagging a release.
 
 The chain-side test vector is the localnet dev key (`devnet/local-dev-key.json`, [`ligate-chain#247`](https://github.com/ligate-io/ligate-chain/pull/247)) — private key `0x01...01`, address `lig132yw8ht5p8cetl2jmvknewjawt9xwzdlrk2pyxlnwjyqz3m499u`. Pinned in `test/keys.test.ts`. If chain regenerates the dev key, those tests need the new vectors.
 

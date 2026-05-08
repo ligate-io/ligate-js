@@ -33,8 +33,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "fmt": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "fmt:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\""
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "fmt": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"e2e/**/*.ts\"",
+    "fmt:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"e2e/**/*.ts\""
   },
   "dependencies": {
     "@noble/ed25519": "^2.1.0",
