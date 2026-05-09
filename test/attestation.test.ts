@@ -83,7 +83,7 @@ describe('signRegisterAttestorSet', () => {
       members: [member],
       threshold: 1,
       nonce: 0n,
-      chainId: 4321n,
+      chainId: 4242n,
       chainHash: DUMMY_CHAIN_HASH,
     })
     expect(runtimeCallSlice(envelope, FIXTURE_BYTES.length)).toEqual(FIXTURE_BYTES)
@@ -137,7 +137,7 @@ describe('signRegisterSchema', () => {
       attestorSetId: new Uint8Array(32).fill(0xbb),
       payloadShapeHash: new Uint8Array(32),
       nonce: 0n,
-      chainId: 4321n,
+      chainId: 4242n,
       chainHash: DUMMY_CHAIN_HASH,
     })
     expect(runtimeCallSlice(envelope, FIXTURE_BYTES.length)).toEqual(FIXTURE_BYTES)
@@ -183,7 +183,7 @@ describe('signSubmitAttestation', () => {
         },
       ],
       nonce: 0n,
-      chainId: 4321n,
+      chainId: 4242n,
       chainHash: DUMMY_CHAIN_HASH,
     })
     expect(runtimeCallSlice(envelope, FIXTURE_BYTES.length)).toEqual(FIXTURE_BYTES)

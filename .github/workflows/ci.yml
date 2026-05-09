@@ -69,6 +69,25 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
+  # Browser-target bundle smoke. esbuild's `--platform=browser` errors
+  # if any imported module references a Node-only API (`node:` prefix,
+  # `Buffer` as a type-level import, etc.). Catches regressions where a
+  # contributor introduces a Node-only dep that breaks the README's
+  # "browser-compatible" promise.
+  bundle-browser:
+    name: esbuild --platform=browser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm bundle:browser-check
+
   # Single summary check the branch ruleset can require. Mirrors the
   # pattern from `ligate-io/ligate-chain` and `ligate-io/ligate-cli`.
   # Gating the ruleset on `CI pass` instead of each underlying job
@@ -76,7 +95,7 @@ jobs:
   ci-pass:
     name: CI pass
     if: always()
-    needs: [fmt, typecheck, test, build]
+    needs: [fmt, typecheck, test, build, bundle-browser]
     runs-on: ubuntu-latest
     steps:
       - name: Verify required checks
@@ -85,10 +104,11 @@ jobs:
           TYPECHECK_RESULT: ${{ needs.typecheck.result }}
           TEST_RESULT: ${{ needs.test.result }}
           BUILD_RESULT: ${{ needs.build.result }}
+          BUNDLE_BROWSER_RESULT: ${{ needs.bundle-browser.result }}
         run: |
           set -euo pipefail
           fail=0
-          for var in FMT_RESULT TYPECHECK_RESULT TEST_RESULT BUILD_RESULT; do
+          for var in FMT_RESULT TYPECHECK_RESULT TEST_RESULT BUILD_RESULT BUNDLE_BROWSER_RESULT; do
             result="${!var}"
             if [[ "$result" != "success" ]]; then
               echo "::error::${var,,}: $result"

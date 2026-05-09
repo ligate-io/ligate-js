@@ -138,6 +138,87 @@ export class LigateClient {
     return BigInt(body.amount)
   }
 
+  // ---- Indexer query methods ----------------------------------------------
+  //
+  // These methods talk to ligate-api's `/v1/blocks*`, `/v1/txs*`,
+  // `/v1/addresses/*`, `/v1/schemas*`, `/v1/attestor-sets/*` surface
+  // (see `ligate-io/ligate-api`). Point `rpcUrl` at a ligate-api
+  // deployment, not the chain directly — the chain's `/v1/...` exposes
+  // a different surface (sequencer/ledger/rollup) and these methods
+  // would 404 against it.
+  //
+  // Return types are intentionally generic (`<T = unknown>` so callers
+  // can narrow). The ligate-api response shapes aren't fully pinned yet
+  // (the v0 indexer ships placeholders returning 501); these methods
+  // will gain concrete return types once the indexer's Postgres schema
+  // and serializers stabilise. Tracked at
+  // https://github.com/ligate-io/ligate-api/issues/1.
+
+  /**
+   * Page through the indexer's blocks list.
+   *
+   * `limit` and `before` are forwarded as query-string params; the api
+   * caps `limit` server-side. `before` is a cursor (block height or
+   * opaque token, depending on how the indexer chooses to paginate).
+   */
+  async listBlocks<T = unknown>(params: { limit?: number; before?: string } = {}): Promise<T> {
+    return this.getJson<T>(`/blocks${formatQuery(params)}`)
+  }
+
+  /** Fetch a single block by `height`. */
+  async getBlock<T = unknown>(height: number | bigint): Promise<T> {
+    return this.getJson<T>(`/blocks/${height.toString()}`)
+  }
+
+  /** Page through the indexer's transactions list. */
+  async listTxs<T = unknown>(params: { limit?: number; before?: string } = {}): Promise<T> {
+    return this.getJson<T>(`/txs${formatQuery(params)}`)
+  }
+
+  /**
+   * Fetch a single transaction by hash.
+   *
+   * Accepts hex with or without a leading `0x`; the api accepts both
+   * forms but normalises to lowercase hex internally.
+   */
+  async getTx<T = unknown>(hash: string): Promise<T> {
+    return this.getJson<T>(`/txs/${hash}`)
+  }
+
+  /**
+   * Address summary (balances, recent activity, attestation counts).
+   *
+   * `address` is the bech32m `lig1...` form.
+   */
+  async getAddressSummary<T = unknown>(address: string): Promise<T> {
+    return this.getJson<T>(`/addresses/${address}`)
+  }
+
+  /** Page through registered attestation schemas. */
+  async listSchemas<T = unknown>(params: { limit?: number; before?: string } = {}): Promise<T> {
+    return this.getJson<T>(`/schemas${formatQuery(params)}`)
+  }
+
+  /**
+   * Fetch a single attestation schema by id.
+   *
+   * `id` accepts the bech32m `lsc1...` form (canonical) or 64-char hex.
+   */
+  async getSchema<T = unknown>(id: string): Promise<T> {
+    return this.getJson<T>(`/schemas/${id}`)
+  }
+
+  /**
+   * Fetch a single attestor set by id.
+   *
+   * `id` accepts the bech32m `las1...` form (canonical) or 64-char hex.
+   */
+  async getAttestorSet<T = unknown>(id: string): Promise<T> {
+    return this.getJson<T>(`/attestor-sets/${id}`)
+  }
+
+  // ---- Low-level escape hatches --------------------------------------------
+
   /**
    * Low-level HTTP GET that returns parsed JSON. Throws on non-2xx.
    *
@@ -180,6 +261,19 @@ export class LigateClient {
     }
     return (await res.json()) as T
   }
+}
+
+/**
+ * Format a `?key=value&key=value` query string from a sparse object.
+ * Skips `undefined` / `null` entries; returns `''` if no params.
+ */
+function formatQuery(params: Record<string, unknown>): string {
+  const pairs: string[] = []
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null) continue
+    pairs.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+  }
+  return pairs.length === 0 ? '' : `?${pairs.join('&')}`
 }
 
 /**

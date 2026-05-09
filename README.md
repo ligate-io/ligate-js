@@ -44,7 +44,7 @@ const result = await submitTransfer({
   // both signing and getBalance normalise internally.
   tokenId: 'token_1nyl0e0yweragfsatygt24zmd8jrr2vqtvdfptzjhxkguz2xxx3vs0y07u7',
   nonce,
-  chainId: 4321n, // from chain `chain_state.json`
+  chainId: 4242n, // from chain `constants.toml` (`CHAIN_ID`)
   chainHash: info.chain_hash,
 })
 
@@ -80,7 +80,7 @@ const bytes = signTransfer({
   amountNano: 1_000_000_000n,
   tokenId: '<64-char hex>',
   nonce,
-  chainId: 4321n,
+  chainId: 4242n,
   chainHash: '<64-char hex>',
 })
 
