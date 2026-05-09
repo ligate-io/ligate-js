@@ -13,6 +13,8 @@ Release body. Keep section headings in the format `## [X.Y.Z] - YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-05-09
+
 ### Added
 
 - High-level attestation submit helpers: `submitRegisterAttestorSet`,
@@ -24,17 +26,20 @@ Release body. Keep section headings in the format `## [X.Y.Z] - YYYY-MM-DD`.
   optional generic response type so callers can narrow once
   ligate-api's response shapes stabilise (tracked at
   [`ligate-api#1`](https://github.com/ligate-io/ligate-api/issues/1)).
-- E2E test coverage for `RegisterAttestorSet` and `RegisterSchema`
-  flows against a live localnet.
 - Browser-bundle smoke job in CI: bundles the SDK with esbuild's
   `--platform=browser` target. Catches regressions when a Node-only
   import (`node:`-prefixed module, etc.) sneaks into the public
   surface. Runs in <100ms; no DOM emulation needed since the SDK
   doesn't touch DOM APIs and `@noble/*` + `@scure/base` advertise
   browser-safety.
-- This `CHANGELOG.md`. The release workflow now extracts the matching
+- This `CHANGELOG.md`. The release workflow extracts the matching
   section as the GitHub Release body instead of generating a
   one-liner.
+
+### Fixed
+
+- README `chainId` example referenced stale value `4321n`. Corrected
+  to `4242n` (matches `ligate-chain/constants.toml`'s `CHAIN_ID`).
 
 ## [0.0.1] - 2026-05-08
 
