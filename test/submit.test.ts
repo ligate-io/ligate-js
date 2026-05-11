@@ -50,7 +50,11 @@ describe('submitRawTx', () => {
       if (init?.method === 'POST') {
         observedUrl = url
         observedInit = init
-        return jsonResponse({ id: 'deadbeef' })
+        // Bech32m form matching what the chain actually returns after
+        // the bech32m everywhere SDK fork patches. The SDK does no
+        // format validation, so this fixture also exercises the
+        // pass-through path.
+        return jsonResponse({ id: 'ltx1deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' })
       }
       return jsonResponse({ status: 'committed' })
     }) as typeof fetch
@@ -66,7 +70,9 @@ describe('submitRawTx', () => {
     const body = JSON.parse(observedInit?.body as string) as { body: string }
     // base64 of [1,2,3,4] = "AQIDBA=="
     expect(body.body).toBe('AQIDBA==')
-    expect(result.txHash).toBe('deadbeef')
+    expect(result.txHash).toBe(
+      'ltx1deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+    )
     expect(result.included).toBe(true)
   })
 
@@ -76,14 +82,17 @@ describe('submitRawTx', () => {
       if (init?.method !== 'POST') {
         pollCount++
       }
-      return jsonResponse({ id: 'feedface' })
+      return jsonResponse({ id: 'ltx1feedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedface' })
     }) as typeof fetch
 
     const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
     const result = await submitRawTx(client, new Uint8Array([0]), {
       waitForInclusion: false,
     })
-    expect(result).toEqual({ txHash: 'feedface', included: false })
+    expect(result).toEqual({
+      txHash: 'ltx1feedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedface',
+      included: false,
+    })
     expect(pollCount).toBe(0)
   })
 })
@@ -125,7 +134,7 @@ function captureSubmitFetch(): { fetch: typeof fetch; observed: { url?: string; 
     if (init?.method === 'POST') {
       observed.url = url
       observed.body = init.body as string
-      return jsonResponse({ id: 'feedface' })
+      return jsonResponse({ id: 'ltx1feedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedface' })
     }
     return jsonResponse({ status: 'committed' })
   }) as typeof fetch
@@ -157,7 +166,10 @@ describe('submitRegisterAttestorSet', () => {
     // First runtime-call byte is the module discriminant; second is the variant.
     expect(envelope[ENVELOPE_HEADER_LEN]).toBe(RUNTIME_ATTESTATION_DISC)
     expect(envelope[ENVELOPE_HEADER_LEN + 1]).toBe(REGISTER_ATTESTOR_SET_DISC)
-    expect(result).toEqual({ txHash: 'feedface', included: true })
+    expect(result).toEqual({
+      txHash: 'ltx1feedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedface',
+      included: true,
+    })
   })
 })
 

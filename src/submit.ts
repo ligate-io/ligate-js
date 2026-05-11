@@ -58,7 +58,12 @@ export interface SubmitTransferParams extends SignTransferParams, LigateClientOp
 
 /** Response from [`submitRawTx`] / [`submitTransfer`]. */
 export interface SubmitResult {
-  /** Server-returned transaction hash, hex-encoded (no `0x` prefix). */
+  /**
+   * Server-returned transaction hash. Bech32m-encoded with HRP `ltx`
+   * (`ltx1...`); the SDK forwards whatever the chain returns without
+   * normalisation, so legacy nodes serving hex would flow through
+   * unchanged.
+   */
   txHash: string
   /**
    * `true` if the tx was confirmed on-chain via polling. `false` when
