@@ -54,7 +54,9 @@ describe('submitRawTx', () => {
         // the bech32m everywhere SDK fork patches. The SDK does no
         // format validation, so this fixture also exercises the
         // pass-through path.
-        return jsonResponse({ id: 'ltx1deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' })
+        return jsonResponse({
+          id: 'ltx1deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+        })
       }
       return jsonResponse({ status: 'committed' })
     }) as typeof fetch
@@ -82,7 +84,9 @@ describe('submitRawTx', () => {
       if (init?.method !== 'POST') {
         pollCount++
       }
-      return jsonResponse({ id: 'ltx1feedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedface' })
+      return jsonResponse({
+        id: 'ltx1feedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedface',
+      })
     }) as typeof fetch
 
     const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
@@ -134,7 +138,9 @@ function captureSubmitFetch(): { fetch: typeof fetch; observed: { url?: string; 
     if (init?.method === 'POST') {
       observed.url = url
       observed.body = init.body as string
-      return jsonResponse({ id: 'ltx1feedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedface' })
+      return jsonResponse({
+        id: 'ltx1feedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedfacefeedface',
+      })
     }
     return jsonResponse({ status: 'committed' })
   }) as typeof fetch
