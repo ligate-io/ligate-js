@@ -60,6 +60,7 @@
 
 import { decodeAddress } from './address.js'
 import { BorshWriter } from './borsh.js'
+import { chainHashToBytes } from './chainHash.js'
 import { hexToBytes, sign } from './keys.js'
 import { tokenIdToBytes } from './token.js'
 
@@ -101,7 +102,16 @@ export interface SignTransferParams {
   nonce: bigint
   /** Numeric chain id (u64). Pulled from chain `constants.toml`. */
   chainId: bigint
-  /** 32-byte chain hash (hex string or `Uint8Array`). From `GET /v1/rollup/info`. */
+  /**
+   * 32-byte chain hash. Accepts:
+   *
+   * - `Uint8Array` of length 32
+   * - bech32m `lsch1...` (canonical form on `GET /v1/rollup/info` since
+   *   `ligate-chain@0ac7e5b`; pass `info.chain_hash` directly)
+   * - 64-char hex string with or without `0x` (legacy chain revs)
+   *
+   * See [`chainHashToBytes`] for the coercion rules.
+   */
   chainHash: string | Uint8Array
   /** Max fee budget in nano-LGT. Defaults to 100_000_000 (0.1 LGT). */
   maxFeeNano?: bigint
@@ -149,6 +159,13 @@ export interface SignEnvelopeParams {
   publicKey: Uint8Array
   nonce: bigint
   chainId: bigint
+  /**
+   * 32-byte chain hash. Accepts a `Uint8Array(32)`, a bech32m
+   * `lsch1...` string (the canonical form on
+   * `GET /v1/rollup/info` since `ligate-chain@0ac7e5b`), or a
+   * 64-char hex string with or without `0x` (legacy chain revs).
+   * See [`chainHashToBytes`].
+   */
   chainHash: string | Uint8Array
   maxFeeNano?: bigint
   maxPriorityFeeBips?: bigint
@@ -167,7 +184,7 @@ export interface SignEnvelopeParams {
  */
 export function wrapAndSign(runtimeCallBytes: Uint8Array, params: SignEnvelopeParams): Uint8Array {
   const { privateKey, publicKey, nonce, chainId } = params
-  const chainHash = bytesArg(params.chainHash, 32, 'chainHash')
+  const chainHash = chainHashToBytes(params.chainHash)
   const maxFeeNano = params.maxFeeNano ?? 100_000_000n
   const maxPriorityFeeBips = params.maxPriorityFeeBips ?? 0n
 

@@ -27,6 +27,12 @@ export interface RollupInfo {
    * Build-time `CHAIN_HASH`. Bech32m-encoded with HRP `lsch`
    * (`lsch1...`); matches `/v1/rollup/schema` for the same value.
    * Wallets use it as the chain-identity fingerprint at signing time.
+   *
+   * Pass this string directly as `chainHash` to
+   * [`signTransfer`] / [`wrapAndSign`] / [`submitTransfer`]; the
+   * coercion helper [`chainHashToBytes`] decodes the bech32m form
+   * before the signing payload is built. Legacy 64-char hex from
+   * older chain revs is also accepted.
    */
   chain_hash: string
   /** `ligate-node` binary semver. */

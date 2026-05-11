@@ -16,6 +16,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { decodeAddress } from '../src/address.js'
+import { encodeChainHash } from '../src/chainHash.js'
 import { keypairFromPrivateKey, verify } from '../src/keys.js'
 import { signTransfer } from '../src/transaction.js'
 
@@ -23,6 +24,7 @@ const DEV_PRIVATE_KEY = '01'.repeat(32)
 const DUMMY_TO = 'lig132yw8ht5p8cetl2jmvknewjawt9xwzdlrk2pyxlnwjyqz3m499u'
 const DUMMY_TOKEN = 'aa'.repeat(32)
 const DUMMY_CHAIN_HASH = 'bb'.repeat(32)
+const DUMMY_CHAIN_HASH_BECH32M = encodeChainHash(new Uint8Array(32).fill(0xbb))
 
 describe('signTransfer', () => {
   const kp = keypairFromPrivateKey(DEV_PRIVATE_KEY)
@@ -100,6 +102,21 @@ describe('signTransfer', () => {
     message.set(chainHashBytes, body.length)
 
     expect(verify(signature, message, kp.publicKey)).toBe(true)
+  })
+
+  it('accepts a bech32m `lsch1...` chainHash and produces identical bytes to hex', () => {
+    const base = {
+      privateKey: kp.privateKeyHex,
+      publicKey: kp.publicKey,
+      to: DUMMY_TO,
+      amountNano: 42n,
+      tokenId: DUMMY_TOKEN,
+      nonce: 7n,
+      chainId: 4242n,
+    }
+    const fromHex = signTransfer({ ...base, chainHash: DUMMY_CHAIN_HASH })
+    const fromBech32m = signTransfer({ ...base, chainHash: DUMMY_CHAIN_HASH_BECH32M })
+    expect(fromBech32m).toEqual(fromHex)
   })
 
   it('rejects wrong-length inputs', () => {
