@@ -23,7 +23,17 @@ export const DEFAULT_MAX_FEE_NANO = 100_000_000n
 export interface RollupInfo {
   /** Cosmos-style chain identifier from the `[chain]` config section. */
   chain_id: string
-  /** Build-time `CHAIN_HASH`, hex-encoded (lowercase, 64 chars, no `0x`). */
+  /**
+   * Build-time `CHAIN_HASH`. Bech32m-encoded with HRP `lsch`
+   * (`lsch1...`); matches `/v1/rollup/schema` for the same value.
+   * Wallets use it as the chain-identity fingerprint at signing time.
+   *
+   * Pass this string directly as `chainHash` to
+   * [`signTransfer`] / [`wrapAndSign`] / [`submitTransfer`]; the
+   * coercion helper [`chainHashToBytes`] decodes the bech32m form
+   * before the signing payload is built. Legacy 64-char hex from
+   * older chain revs is also accepted.
+   */
   chain_hash: string
   /** `ligate-node` binary semver. */
   version: string
@@ -79,7 +89,10 @@ export class LigateClient {
    * Uses the chain's purpose-built dedup endpoint
    * `GET /v1/rollup/addresses/{credential_id}/dedup` (the `dedup`
    * action of the `SovereignDeDupEndpoint`). For `MockZkvmCryptoSpec`,
-   * `credential_id` is the raw 32-byte public key hex-encoded.
+   * `credential_id` is the 32-byte public key. The chain accepts
+   * both the bech32m form (`lpk1...`) and legacy hex on the path
+   * via `PubKeyBech32::FromStr`; the SDK passes through whatever
+   * the caller hands it.
    *
    * Returns `0n` if the address has never sent a transaction (the
    * endpoint reports `{"nonce": 0}` for un-seen credential ids).
@@ -178,8 +191,10 @@ export class LigateClient {
   /**
    * Fetch a single transaction by hash.
    *
-   * Accepts hex with or without a leading `0x`; the api accepts both
-   * forms but normalises to lowercase hex internally.
+   * Accepts bech32m (`ltx1...`, the chain's canonical output form) or
+   * legacy hex with or without a leading `0x`. The chain's
+   * `TxHash::FromStr` resolves either. The SDK forwards whatever the
+   * caller hands it without normalisation.
    */
   async getTx<T = unknown>(hash: string): Promise<T> {
     return this.getJson<T>(`/txs/${hash}`)

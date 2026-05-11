@@ -68,6 +68,15 @@ export {
   decodeTokenIdBech32m,
 } from './token.js'
 
+// ChainHash encoding helpers (hex ↔ bech32m `lsch1...` ↔ Uint8Array).
+export {
+  CHAIN_HASH_HRP,
+  CHAIN_HASH_BYTE_LENGTH,
+  chainHashToBytes,
+  encodeChainHash,
+  decodeChainHash,
+} from './chainHash.js'
+
 // Transaction builder + signer.
 export { signTransfer, wrapAndSign, bytesArg } from './transaction.js'
 export type { SignTransferParams, SignEnvelopeParams } from './transaction.js'
