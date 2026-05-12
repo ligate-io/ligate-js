@@ -12,3 +12,6 @@ coverage
 playwright-report
 test-results
 tests/browser/fixtures/sdk.bundle.js
+
+# TypeDoc generated output (built on demand + in CI as an artifact).
+docs
