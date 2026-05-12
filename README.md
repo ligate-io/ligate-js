@@ -121,6 +121,42 @@ pnpm fmt:check              # prettier --check (CI gate)
 pnpm build                  # compile to dist/ for publish
 ```
 
+### Examples
+
+Three runnable scripts in `examples/` demonstrate the public surface:
+
+```bash
+# Generate a fresh keypair and (optionally) write to a JSON file.
+pnpm tsx examples/generate-keypair.ts
+pnpm tsx examples/generate-keypair.ts --out my-key.json
+
+# Build + sign + submit a 1 LGT transfer to a recipient. Uses the
+# localnet dev key by default; pass --from to use a generated keypair.
+# Requires a running localnet (see end-to-end section below).
+pnpm tsx examples/transfer.ts \
+    --to lig1u8z2rxh6ymjwkqsasme64f5kfphtfm2kf4kkn0clusfpr34amezsp5j7yp \
+    --amount 1
+
+# Poll an address's balance every N seconds (Ctrl-C to stop).
+pnpm tsx examples/watch-balance.ts \
+    lig1u8z2rxh6ymjwkqsasme64f5kfphtfm2kf4kkn0clusfpr34amezsp5j7yp \
+    --interval 5
+```
+
+Each example reads `LIGATE_RPC`, `LIGATE_CHAIN_ID`, and `LIGATE_TOKEN_ID` env vars; defaults match the localnet bring-up in `ligate-chain/devnet/`. Run any example with `--help` for the full flag list.
+
+### Browser test matrix
+
+CI runs Playwright against Chromium, Firefox, and WebKit to prove the SDK actually works in a real browser engine (not just that the bundle emits — that's `bundle:browser-check`). Tests live in `tests/browser/`; the smoke spec navigates to a static HTML page that loads the bundled SDK via `<script type="module">` and exercises key generation, address derivation, and transaction signing.
+
+```bash
+# Local run (downloads browsers on first run):
+pnpm exec playwright install
+pnpm test:browser
+```
+
+The Playwright `globalSetup` (`tests/browser/global-setup.ts`) bundles the SDK with esbuild before any spec runs, so the bundle is always fresh.
+
 ### End-to-end test against a running localnet
 
 `e2e/` is the canary for wire-format drift between the TS SDK and the Rust chain. Stubbed-fetch unit tests pin URL shapes + discriminants, but only running against a real chain catches a borsh field-order mismatch.

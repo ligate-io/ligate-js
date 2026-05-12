@@ -7,3 +7,8 @@ dist
 *.log
 coverage
 .vitest
+
+# Playwright + bundled fixtures
+playwright-report
+test-results
+tests/browser/fixtures/sdk.bundle.js

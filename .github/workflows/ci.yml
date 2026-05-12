@@ -88,6 +88,38 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm bundle:browser-check
 
+  # Playwright matrix. Stronger than `bundle-browser`: actually loads
+  # the SDK in Chromium, Firefox, and WebKit and runs the core surface
+  # (key gen, address derive, tx sign) end-to-end inside each engine.
+  # If the SDK pulls in a browser-incompatible code path (e.g. an
+  # implicit `Buffer` usage, a feature not implemented in WebKit),
+  # this catches it before partners hit it.
+  browser:
+    name: playwright (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - run: pnpm exec playwright test --project=${{ matrix.browser }}
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: playwright-report/
+          retention-days: 7
+
   # Single summary check the branch ruleset can require. Mirrors the
   # pattern from `ligate-io/ligate-chain` and `ligate-io/ligate-cli`.
   # Gating the ruleset on `CI pass` instead of each underlying job
@@ -95,7 +127,7 @@ jobs:
   ci-pass:
     name: CI pass
     if: always()
-    needs: [fmt, typecheck, test, build, bundle-browser]
+    needs: [fmt, typecheck, test, build, bundle-browser, browser]
     runs-on: ubuntu-latest
     steps:
       - name: Verify required checks
@@ -105,10 +137,11 @@ jobs:
           TEST_RESULT: ${{ needs.test.result }}
           BUILD_RESULT: ${{ needs.build.result }}
           BUNDLE_BROWSER_RESULT: ${{ needs.bundle-browser.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
         run: |
           set -euo pipefail
           fail=0
-          for var in FMT_RESULT TYPECHECK_RESULT TEST_RESULT BUILD_RESULT BUNDLE_BROWSER_RESULT; do
+          for var in FMT_RESULT TYPECHECK_RESULT TEST_RESULT BUILD_RESULT BUNDLE_BROWSER_RESULT BROWSER_RESULT; do
             result="${!var}"
             if [[ "$result" != "success" ]]; then
               echo "::error::${var,,}: $result"
