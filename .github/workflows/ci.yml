@@ -105,7 +105,10 @@ jobs:
         with:
           version: 9
       - run: pnpm install --frozen-lockfile
-      - run: pnpm docs
+      # `pnpm docs` (no `run`) is shadowed by the built-in npm/pnpm
+      # `docs` command, which tries to `xdg-open` the package.json
+      # homepage. `pnpm run docs` always picks the script.
+      - run: pnpm run docs
       - uses: actions/upload-artifact@v4
         with:
           name: typedoc-html

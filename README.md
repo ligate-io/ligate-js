@@ -98,7 +98,7 @@ await waitForInclusion(client, txHash, { pollIntervalMs: 1000, timeoutMs: 60_000
 Per-symbol reference (every exported function, type, and constant) is generated from the inline JSDoc via TypeDoc.
 
 ```bash
-pnpm docs   # writes static HTML to docs/
+pnpm run docs   # writes static HTML to docs/
 ```
 
 CI also builds it on every push and uploads the result as a `typedoc-html` workflow artifact (retention 14 days). Public hosting on `docs.ligate.io/sdk` is pending the subdomain routing decision; until that lands, grab the artifact from a recent CI run.
@@ -130,7 +130,7 @@ pnpm fmt                    # prettier --write
 pnpm fmt:check              # prettier --check (CI gate)
 pnpm build                  # compile to dist/ for publish
 pnpm size                   # size-limit bundle budget check
-pnpm docs                   # generate TypeDoc HTML in docs/
+pnpm run docs               # generate TypeDoc HTML in docs/
 ```
 
 ### Examples
