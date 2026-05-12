@@ -34,9 +34,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "test:browser": "playwright test --config playwright.config.ts",
     "bundle:browser-check": "esbuild src/index.ts --bundle --platform=browser --target=es2022 --format=esm --outfile=/dev/null",
-    "fmt": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"e2e/**/*.ts\"",
-    "fmt:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"e2e/**/*.ts\""
+    "example:keygen": "tsx examples/generate-keypair.ts",
+    "example:transfer": "tsx examples/transfer.ts",
+    "example:watch": "tsx examples/watch-balance.ts",
+    "fmt": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"e2e/**/*.ts\" \"examples/**/*.ts\" \"tests/**/*.ts\"",
+    "fmt:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"e2e/**/*.ts\" \"examples/**/*.ts\" \"tests/**/*.ts\""
   },
   "dependencies": {
     "@noble/ed25519": "^2.1.0",
@@ -44,9 +48,11 @@
     "@scure/base": "^1.1.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/node": "^22.7.0",
     "esbuild": "^0.24.2",
     "prettier": "^3.3.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   },

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ligate-js browser smoke</title>
+  </head>
+  <body>
+    <h1>ligate-js browser smoke</h1>
+    <p>
+      This page loads the SDK bundle and exposes its public surface on
+      <code>window.ligateSdk</code> for Playwright's <code>page.evaluate</code> to
+      poke at. See <code>tests/browser/smoke.spec.ts</code>.
+    </p>
+    <script type="module">
+      // The bundle is produced by `global-setup.ts` (esbuild) and sits
+      // next to this file. The relative path stays valid whether the
+      // page is served over file:// or a local web server.
+      import * as ligateSdk from './sdk.bundle.js'
+      // Park on a well-known global; spec files reach into this.
+      window.ligateSdk = ligateSdk
+      // Signal readiness so the spec doesn't race the module load.
+      window.ligateSdkReady = true
+    </script>
+  </body>
+</html>
