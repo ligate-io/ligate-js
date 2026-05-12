@@ -20,6 +20,8 @@
  */
 import { defineConfig, devices } from '@playwright/test'
 
+const FIXTURE_PORT = 4173
+
 export default defineConfig({
   testDir: './tests/browser',
   fullyParallel: true,
@@ -30,8 +32,18 @@ export default defineConfig({
   // Bundles the SDK once with esbuild before any spec runs; see
   // `tests/browser/global-setup.ts`.
   globalSetup: './tests/browser/global-setup.ts',
+  // Tiny static-file server for the fixture HTML page. Required
+  // because Chromium and WebKit block ES module imports over `file://`
+  // (Firefox is more permissive). See `tests/browser/serve-fixtures.ts`.
+  webServer: {
+    command: `pnpm tsx tests/browser/serve-fixtures.ts`,
+    url: `http://localhost:${FIXTURE_PORT}/test.html`,
+    reuseExistingServer: !process.env.CI,
+    timeout: 30_000,
+    env: { PORT: String(FIXTURE_PORT) },
+  },
   use: {
-    // We serve test pages over file://, so no baseURL.
+    baseURL: `http://localhost:${FIXTURE_PORT}`,
     trace: 'on-first-retry',
   },
   projects: [

@@ -20,11 +20,11 @@
  * smoke. That's the gap this matrix is here to close.
  */
 import { expect, test } from '@playwright/test'
-import { fileURLToPath } from 'node:url'
-import { dirname, resolve } from 'node:path'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const FIXTURE = `file://${resolve(__dirname, 'fixtures/test.html')}`
+// Served via the `webServer` block in `playwright.config.ts` (see
+// `tests/browser/serve-fixtures.ts`). HTTP (rather than file://) is
+// required so Chromium + WebKit don't block the ES module import.
+const FIXTURE = '/test.html'
 
 // Canonical localnet dev-key vector. Anchor: chain repo #247.
 const DEV_PRIVATE_KEY_HEX = '01'.repeat(32)
