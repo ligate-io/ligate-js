@@ -1,0 +1,109 @@
+name: CLI byte parity
+
+# Cross-repo byte-parity gate between `@ligate-labs/sdk` (this repo)
+# and `ligate-cli` (Rust). Both implementations sign the same logical
+# transaction; the borsh-encoded signed-tx bytes MUST be byte-identical.
+# A divergence indicates wire-format drift before partners hit it.
+#
+# Runs on PRs touching the signing surface (`src/transaction.ts`,
+# `src/borsh.ts`, fixed test vectors) + a weekly cron to catch drift
+# from upstream chain changes.
+#
+# Tracking issue: ligate-io/ligate-js#18.
+#
+# ## Cost
+#
+# Building `ligate-cli` cold is ~10 min. Swatinem rust-cache brings
+# warm builds to ~2 min. The job's 30 min timeout covers cold-cache
+# CI workers.
+
+on:
+  pull_request:
+    paths:
+      - 'src/transaction.ts'
+      - 'src/borsh.ts'
+      - 'src/keys.ts'
+      - 'src/address.ts'
+      - 'src/chainHash.ts'
+      - 'src/token.ts'
+      - 'test/cli-parity.test.ts'
+      - '.github/workflows/cli-parity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/transaction.ts'
+      - 'src/borsh.ts'
+      - 'src/keys.ts'
+      - 'src/address.ts'
+      - 'src/chainHash.ts'
+      - 'src/token.ts'
+      - 'test/cli-parity.test.ts'
+      - '.github/workflows/cli-parity.yml'
+  # Weekly drift watcher — even without a PR, the upstream chain may
+  # have moved underneath us.
+  schedule:
+    - cron: '0 7 * * 1'  # Mondays 07:00 UTC
+  workflow_dispatch:
+
+jobs:
+  parity:
+    name: ligate-cli + sdk byte parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout ligate-js
+        uses: actions/checkout@v6
+        with:
+          path: ligate-js
+
+      - name: Checkout ligate-cli
+        uses: actions/checkout@v6
+        with:
+          repository: ligate-io/ligate-cli
+          path: ligate-cli
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.93.0
+
+      - name: Install libclang (librocksdb-sys build dep)
+        run: sudo apt-get update && sudo apt-get install -y libclang-dev clang
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ligate-cli
+
+      - name: Build ligate-cli (release)
+        working-directory: ligate-cli
+        env:
+          # SDK guest build is skipped at host build time; matches the
+          # chain repo's CI flags.
+          SKIP_GUEST_BUILD: '1'
+          RISC0_SKIP_BUILD_KERNELS: '1'
+          CONSTANTS_MANIFEST_PATH: ${{ github.workspace }}/ligate-cli/constants.toml
+        run: cargo build --release
+
+      - name: pnpm install (ligate-js)
+        working-directory: ligate-js
+        run: pnpm install --frozen-lockfile
+
+      - name: Run parity test
+        working-directory: ligate-js
+        env:
+          LIGATE_CLI_BIN: ${{ github.workspace }}/ligate-cli/target/release/ligate
+          # The CLI's risc0 build script reads these even on `transfer`
+          # (--print-tx-bytes path doesn't need ZK; env-var matches CI
+          # for the chain repo so the binary launches without trying
+          # to build kernels).
+          SKIP_GUEST_BUILD: '1'
+          RISC0_SKIP_BUILD_KERNELS: '1'
+          CONSTANTS_MANIFEST_PATH: ${{ github.workspace }}/ligate-cli/constants.toml
+        run: pnpm test -- test/cli-parity.test.ts
