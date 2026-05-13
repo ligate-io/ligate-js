@@ -1,0 +1,8 @@
+[
+  {
+    "name": "@ligate-labs/sdk (tree-shaken ESM)",
+    "path": "dist/index.js",
+    "import": "*",
+    "limit": "15 kB"
+  }
+]

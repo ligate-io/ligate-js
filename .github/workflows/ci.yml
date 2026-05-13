@@ -69,6 +69,52 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
+  # Bundle size regression gate. Runs `size-limit` against the published
+  # `dist/index.js` and fails if the brotli'd, tree-shaken bundle blows
+  # past the budget in `.size-limit.json`. Catches accidental fat deps
+  # before they make it into a release. See ligate-js#7.
+  bundle-size:
+    name: size-limit
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm size
+
+  # TypeDoc API reference. Renders the JSDoc on the public surface into
+  # static HTML and uploads as a workflow artifact. Hosting on
+  # docs.ligate.io/sdk is deferred pending the subdomain routing
+  # decision. See ligate-js#5.
+  typedoc:
+    name: typedoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      # `pnpm docs` (no `run`) is shadowed by the built-in npm/pnpm
+      # `docs` command, which tries to `xdg-open` the package.json
+      # homepage. `pnpm run docs` always picks the script.
+      - run: pnpm run docs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: typedoc-html
+          path: docs/
+          retention-days: 14
+
   # Browser-target bundle smoke. esbuild's `--platform=browser` errors
   # if any imported module references a Node-only API (`node:` prefix,
   # `Buffer` as a type-level import, etc.). Catches regressions where a
@@ -127,7 +173,7 @@ jobs:
   ci-pass:
     name: CI pass
     if: always()
-    needs: [fmt, typecheck, test, build, bundle-browser, browser]
+    needs: [fmt, typecheck, test, build, bundle-size, typedoc, bundle-browser, browser]
     runs-on: ubuntu-latest
     steps:
       - name: Verify required checks
@@ -136,12 +182,14 @@ jobs:
           TYPECHECK_RESULT: ${{ needs.typecheck.result }}
           TEST_RESULT: ${{ needs.test.result }}
           BUILD_RESULT: ${{ needs.build.result }}
+          BUNDLE_SIZE_RESULT: ${{ needs.bundle-size.result }}
+          TYPEDOC_RESULT: ${{ needs.typedoc.result }}
           BUNDLE_BROWSER_RESULT: ${{ needs.bundle-browser.result }}
           BROWSER_RESULT: ${{ needs.browser.result }}
         run: |
           set -euo pipefail
           fail=0
-          for var in FMT_RESULT TYPECHECK_RESULT TEST_RESULT BUILD_RESULT BUNDLE_BROWSER_RESULT BROWSER_RESULT; do
+          for var in FMT_RESULT TYPECHECK_RESULT TEST_RESULT BUILD_RESULT BUNDLE_SIZE_RESULT TYPEDOC_RESULT BUNDLE_BROWSER_RESULT BROWSER_RESULT; do
             result="${!var}"
             if [[ "$result" != "success" ]]; then
               echo "::error::${var,,}: $result"
