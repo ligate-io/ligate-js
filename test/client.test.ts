@@ -233,6 +233,48 @@ describe('LigateClient indexer query methods', () => {
     expect(url()).toBe('http://x:1/v1/attestor-sets/las1abc')
   })
 
+  it('listAttestorSets hits /v1/attestor-sets', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.listAttestorSets()
+    expect(url()).toBe('http://x:1/v1/attestor-sets')
+  })
+
+  it('listAttestations hits /v1/attestations', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.listAttestations()
+    expect(url()).toBe('http://x:1/v1/attestations')
+  })
+
+  it('listAttestations forwards limit + before as query params', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.listAttestations({ limit: 25, before: 'lat1cursor' })
+    expect(url()).toBe('http://x:1/v1/attestations?limit=25&before=lat1cursor')
+  })
+
+  it('getAttestation hits /v1/attestations/{id}', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.getAttestation('lat1abc')
+    expect(url()).toBe('http://x:1/v1/attestations/lat1abc')
+  })
+
+  it('listAttestationsBySchema hits /v1/schemas/{id}/attestations', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.listAttestationsBySchema('lsc1abc', { limit: 10 })
+    expect(url()).toBe('http://x:1/v1/schemas/lsc1abc/attestations?limit=10')
+  })
+
+  it('listAttestationsByAttestor hits /v1/attestors/{pubkey}/attestations', async () => {
+    const { fetch: fetchImpl, url } = captureUrl()
+    const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
+    await client.listAttestationsByAttestor('lpk1abc')
+    expect(url()).toBe('http://x:1/v1/attestors/lpk1abc/attestations')
+  })
+
   it('passes a generic response type through getJson', async () => {
     interface MockSchema {
       id: string

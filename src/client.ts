@@ -232,6 +232,56 @@ export class LigateClient {
     return this.getJson<T>(`/attestor-sets/${id}`)
   }
 
+  /** Page through registered attestor sets. */
+  async listAttestorSets<T = unknown>(
+    params: { limit?: number; before?: string } = {},
+  ): Promise<T> {
+    return this.getJson<T>(`/attestor-sets${formatQuery(params)}`)
+  }
+
+  /** Page through the indexer's attestations list. */
+  async listAttestations<T = unknown>(
+    params: { limit?: number; before?: string } = {},
+  ): Promise<T> {
+    return this.getJson<T>(`/attestations${formatQuery(params)}`)
+  }
+
+  /**
+   * Fetch a single attestation by id.
+   *
+   * `id` accepts the bech32m `lat1...` form (canonical) or 64-char hex.
+   */
+  async getAttestation<T = unknown>(id: string): Promise<T> {
+    return this.getJson<T>(`/attestations/${id}`)
+  }
+
+  /**
+   * Page through the attestations recorded against a single schema.
+   *
+   * `schemaId` accepts the bech32m `lsc1...` form (canonical) or
+   * 64-char hex (same encoding as [`getSchema`]).
+   */
+  async listAttestationsBySchema<T = unknown>(
+    schemaId: string,
+    params: { limit?: number; before?: string } = {},
+  ): Promise<T> {
+    return this.getJson<T>(`/schemas/${schemaId}/attestations${formatQuery(params)}`)
+  }
+
+  /**
+   * Page through the attestations a single attestor has signed.
+   *
+   * `pubkey` accepts the bech32m `lpk1...` form (canonical) or 64-char
+   * hex (the attestor public-key encoding the write side uses in
+   * [`signRegisterAttestorSet`]).
+   */
+  async listAttestationsByAttestor<T = unknown>(
+    pubkey: string,
+    params: { limit?: number; before?: string } = {},
+  ): Promise<T> {
+    return this.getJson<T>(`/attestors/${pubkey}/attestations${formatQuery(params)}`)
+  }
+
   // ---- Low-level escape hatches --------------------------------------------
 
   /**
