@@ -120,10 +120,14 @@ jobs:
         run: |
           set -euo pipefail
           TAG_NAME="${{ github.ref_name }}"
-          # Pre-release detection: any tag with a hyphen (rc.N, devnet,
-          # testnet, etc.) goes under the `rc` dist-tag; clean
-          # `vX.Y.Z` tags become `latest`.
-          if [[ "${TAG_NAME}" == *-* ]]; then
+          # Dist-tag selection: ONLY `-rc.` tags go to the `rc`
+          # channel (true release candidates). `-devnet` / `-testnet`
+          # tags are "current public network" releases -- pinned,
+          # canonical for that network's lifetime -- and ship on
+          # `latest` so `npm install @ligate-labs/sdk` resolves to the
+          # version that works against the current public network.
+          # Full mainnet (`vX.Y.Z` plain) is also `latest`.
+          if [[ "${TAG_NAME}" == *-rc.* ]]; then
             DIST_TAG=rc
           else
             DIST_TAG=latest
@@ -178,4 +182,8 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           body_path: ${{ steps.notes.outputs.path }}
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          # Treat ONLY tags containing `-rc.` as pre-release (true
+          # release candidates). `-devnet` / `-testnet` tags are
+          # "current public network" releases and ship as normal
+          # releases (matching the npm dist-tag logic above).
+          prerelease: ${{ contains(github.ref_name, '-rc.') }}
