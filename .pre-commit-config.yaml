@@ -1,0 +1,36 @@
+# pre-commit-config.yaml for `@ligate-labs/sdk`.
+#
+# Runs every-commit gates that CI later re-runs. Goal: catch the
+# common low-effort failures (mainly prettier drift, since the
+# project's prettier config has opinions that are easy to miss when
+# hand-writing) before the commit leaves the developer machine,
+# instead of after a CI roundtrip.
+#
+# One-time setup, done once per clone:
+#
+#   brew install pre-commit          # or: pip install pre-commit
+#   pre-commit install               # writes .git/hooks/pre-commit
+#
+# After that, every `git commit` runs the hooks below. Bypass with
+# `--no-verify` in emergencies but the same checks then re-fire in CI.
+
+repos:
+  - repo: local
+    hooks:
+      # `prettier --check` — same gate CI uses (.github/workflows/ci.yml).
+      # Uses the project-local prettier (via `npx prettier`) so the
+      # version pinned in package.json applies; framework-mirrored
+      # versions can drift and produce false-positives. Fast (~1s).
+      - id: prettier
+        name: prettier --check
+        description: Verify TypeScript / JSON / Markdown formatting matches .prettierrc.
+        entry: npx prettier --check
+        language: system
+        files: \.(js|jsx|ts|tsx|json|yaml|yml|md|css|scss|html)$
+
+      # `tsc --noEmit` and `vitest` are intentionally NOT in
+      # pre-commit. They're fast-ish but still pull node_modules and
+      # spin a vite server; the per-commit cost adds up. CI runs
+      # them server-side where caching is durable. The big stuff
+      # (playwright across three browsers, size-limit, typedoc) is
+      # firmly CI-only.
