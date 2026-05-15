@@ -13,6 +13,30 @@ Release body. Keep section headings in the format `## [X.Y.Z] - YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.1.0-devnet] - 2026-05-15
+
+First devnet-aligned release. Cut alongside `ligate-chain` `v0.1.0-devnet`, `ligate-cli` `v0.1.0-devnet`, and the `ligate-devnet-1` public rung. Ships under the `rc` npm dist-tag; `latest` stays on `0.0.2` until the wire format locks and a clean `0.1.0` (no suffix) lands.
+
+Install: `npm install @ligate-labs/sdk@rc` (or pin: `@0.1.0-devnet`).
+
+### Added
+
+- `LigateClient` attestation read methods backed by ligate-api: `getSchema`, `getAttestorSet`, `getAttestation`. Pair with the existing `listSchemas` to give SDK consumers a full read-path through the Themisra schema-registry / attestor-set / attestation modules without dropping to raw `fetch`. (#27)
+- Runnable example scripts in `examples/`: `generate-keypair.ts`, `transfer.ts`, `watch-balance.ts`. Each takes `--help`, reads `LIGATE_RPC` / `LIGATE_CHAIN_ID` / `LIGATE_TOKEN_ID` env vars (defaults match the localnet bring-up), and serves as copy-pasteable starter code for partner integrations. (#21)
+- Playwright browser test matrix (Chromium, Firefox, WebKit). The matrix bundles the SDK with esbuild via a `globalSetup`, then exercises key generation, address derivation, and transaction signing in a real engine. Catches "the bundle emits but doesn't actually run in browser" regressions that the existing `bundle:browser-check` smoke can't catch. (#21)
+- TypeDoc API reference build (`pnpm run docs`). CI uploads the result as a `typedoc-html` workflow artifact with 14-day retention. Public hosting on `docs.ligate.io/sdk` pending the subdomain routing decision. (#22)
+- Bundle size gate (`pnpm size` via `size-limit`). CI fails if the published bundle exceeds the agreed budget. Stops "we accidentally pulled in a node-only dep that 10x'd the bundle" regressions before they reach users. (#22)
+- E2E byte-level parity test vs `ligate-cli`. Generates the same transfer in both SDKs (TS + Rust) and asserts byte-identical `Transaction::V0` bytes pre-submit. Pins the borsh layout across both languages so a chain wire-format change can't silently desync the two SDKs. (#25)
+
+### Changed
+
+- bech32m parity across the signing path. Docs, signing internals, and tests updated to accept the `lig1` / `lsc1` / `las1` / `lph1` / `lpk1` HRPs and the `token_1...` token-id form introduced by `ligate-chain` commit `0ac7e5b`. Realigns the SDK with the chain's bech32m rewrite. (#20)
+
+### Chore
+
+- CLA Assistant Lite workflow + canonical `CLA.md` (mirrors `ligate-chain#257`). `sstefdev` allowlisted as an org member rather than a contributor. (#23, #24)
+- `.github/workflows/release.yml` header comment updated: tagging convention now reads `v0.1.0-devnet` for the devnet rung (paired with `ligate-chain` `v0.1.0-devnet`), with `v0.1.0` (no suffix) reserved for the post-soak wire-format-stable cut. The previously documented `v0.0.1` at-devnet target predated the chain's tag consolidation.
+
 ## [0.0.2] - 2026-05-09
 
 ### Added
