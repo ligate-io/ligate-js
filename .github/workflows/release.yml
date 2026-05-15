@@ -4,13 +4,17 @@ name: Release
 # as `@ligate-labs/sdk` with sigstore provenance attestation.
 #
 # Tagging convention:
-#   - Pre-devnet RC:  `v0.0.X-rc.N` (auto-flagged as pre-release on npm
-#                     via the `--tag rc` distribution tag below)
-#   - At devnet:      `v0.0.1` (paired with the chain's
-#                     `v0.1.0-devnet`; first stable user-installable tag)
-#   - Post-devnet:    `v0.1.0` once the chain's wire format is stable
-#                     and SDK consumers can rely on no breaking changes
-#                     within `0.1.x`.
+#   - Pre-devnet RC:  `v0.0.X-rc.N` and `v0.0.X` (legacy stable, kept
+#                     on `latest` until the post-soak cut).
+#   - At devnet:      `v0.1.0-devnet` (paired with the chain's
+#                     `v0.1.0-devnet`). Lands on the `rc` dist-tag so
+#                     `npm install @ligate-labs/sdk` (no tag) stays on
+#                     the wire-format-stable line; devnet users opt in
+#                     via `@rc` or by pinning `@0.1.0-devnet`.
+#   - Post-soak:      `v0.1.0` (no suffix) once a 24–48h public soak
+#                     locks the chain's wire format. Promotes to the
+#                     `latest` dist-tag; minor-version SemVer applies
+#                     inside `0.1.x` from that point.
 #
 # Prereqs (operator-side, one-time):
 #   1. Register `@ligate-labs` org on npm under hello@ligate.io.

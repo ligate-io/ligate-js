@@ -9,12 +9,17 @@ TypeScript SDK for [Ligate Chain](https://github.com/ligate-io/ligate-chain). Bu
 ### Install
 
 ```bash
+# Devnet-aligned release (current `ligate-devnet-1` wire format).
+# Ships under the `rc` dist-tag; `latest` stays on the previous
+# stable until the wire format locks for a `0.1.0` (no suffix) cut.
+pnpm add @ligate-labs/sdk@rc
+# or pin exactly: pnpm add @ligate-labs/sdk@0.1.0-devnet
+
+# Last `latest` (pre-devnet, pre-bech32m):
 pnpm add @ligate-labs/sdk
-# or: npm install @ligate-labs/sdk
-# or: yarn add @ligate-labs/sdk
 ```
 
-Once published. Until then, the package is installable from the GitHub URL.
+Both forms work with `npm install` / `yarn add` interchangeably.
 
 ### Use
 
@@ -192,7 +197,9 @@ The chain-side test vector is the localnet dev key (`devnet/local-dev-key.json`,
 
 **Pre-devnet.** `ligate-devnet-1` is targeted for **Q2 2026**. Tracking issue: [`ligate-chain#112`](https://github.com/ligate-io/ligate-chain/issues/112).
 
-Versioning: `0.0.x` while the chain's wire format is still settling. We'll cut `0.1.0` once the chain enters public devnet (Q2 2026) and the surface stops moving day-to-day.
+Latest devnet-aligned release: [`v0.1.0-devnet`](https://github.com/ligate-io/ligate-js/releases/tag/v0.1.0-devnet), cut alongside `ligate-chain` `v0.1.0-devnet`. Installable from npm as `@ligate-labs/sdk@rc` or `@0.1.0-devnet`. The `Pre-devnet` badge above flips once a 24–48h public soak on Mocha completes and a wire-format-stable `0.1.0` (no suffix) lands on the `latest` dist-tag; tracking issue [`ligate-js#28`](https://github.com/ligate-io/ligate-js/issues/28).
+
+Versioning: anything tagged `0.1.x-devnet` may still break wire format between releases as the chain settles. Pin exact versions if you depend on byte-level stability. Post-soak `0.1.0` (no suffix) is the first version where minor-version SemVer applies — patch bumps are guaranteed wire-compatible inside `0.1.x`.
 
 ## Related repos
 
