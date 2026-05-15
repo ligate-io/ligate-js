@@ -52,7 +52,7 @@ import { sha256 } from '@noble/hashes/sha256'
 
 import { decodeAddress } from './address.js'
 import { BorshWriter } from './borsh.js'
-import { bytesToHex, hexToBytes } from './keys.js'
+import { bytesToHex, hexToBytes, keypairFromPrivateKey, sign as signMessage } from './keys.js'
 import { wrapAndSign } from './transaction.js'
 import type { SignEnvelopeParams } from './transaction.js'
 
@@ -260,6 +260,131 @@ export function deriveSchemaId(
   hasher.update(nameBytes)
   hasher.update(versionBytes)
   return hasher.digest()
+}
+
+// ---- Attestor-side signing -------------------------------------------------
+
+/** Inputs to [`attestationDigest`] / [`signAttestation`]. */
+export interface AttestationDigestParams {
+  /**
+   * Schema this attestation is under. Accepts 32-byte `Uint8Array`,
+   * 64-char hex, or `lsc1...` bech32m.
+   */
+  schemaId: string | Uint8Array
+  /**
+   * Hash of the off-chain payload. Accepts 32-byte `Uint8Array`,
+   * 64-char hex, or `lph1...` bech32m.
+   */
+  payloadHash: string | Uint8Array
+  /**
+   * Address that will submit the on-chain tx, NOT the attestor's
+   * address. The chain re-derives the digest at submission time
+   * using `context.sender()`, so the value here MUST match the
+   * eventual submitter for the signature to verify. Accepts 28-byte
+   * `Uint8Array` (raw `Address` bytes) or `lig1...` bech32m.
+   */
+  submitter: string | Uint8Array
+  /**
+   * Unix seconds the digest is computed against. Defaults to `0n`
+   * because chain v0 hardcodes `timestamp = 0` in
+   * `handle_submit_attestation` (the runtime doesn't yet expose
+   * block headers). Override only if signing against a chain that
+   * uses a different timestamp source.
+   */
+  timestamp?: bigint
+}
+
+/**
+ * Compute the canonical attestation digest the chain re-derives at
+ * submission time.
+ *
+ * Layout (Borsh, 101 bytes; see `docs/protocol/attestation-v0.md`
+ * §wire-format for the byte-by-byte table):
+ *
+ * ```
+ * schema_id    [u8; 32]
+ * payload_hash [u8; 32]
+ * 0x00         (MultiAddress::Standard discriminator)
+ * submitter    [u8; 28]
+ * timestamp    u64 little-endian
+ * ```
+ *
+ * The discriminator byte is the most common stumble for hand-rolled
+ * signers, because `S::Address` resolves to `MultiAddress<VmAddress>`
+ * (an enum) and not the bare 28-byte `Address`. The chain's verifier
+ * now surfaces the digest it computed in
+ * `AttestationError::InvalidSignature` if your sig fails to verify,
+ * so any mismatch is debuggable end-to-end without grepping crates.
+ *
+ * @returns the 32-byte SHA-256 digest.
+ */
+export function attestationDigest(params: AttestationDigestParams): Uint8Array {
+  const schemaId = idToBytes(params.schemaId, SCHEMA_HRP)
+  const payloadHash = idToBytes(params.payloadHash, PAYLOAD_HASH_HRP)
+  const submitter =
+    params.submitter instanceof Uint8Array ? params.submitter : decodeAddress(params.submitter)
+  if (submitter.length !== 28) {
+    throw new Error(`submitter address must be 28 bytes; got ${submitter.length}`)
+  }
+  const timestamp = params.timestamp ?? 0n
+
+  const w = new BorshWriter()
+  w.writeFixedBytes(schemaId, 32)
+  w.writeFixedBytes(payloadHash, 32)
+  // MultiAddress::Standard(Address) discriminator. Required; chain
+  // verifier re-derives the same byte and any signer that omits it
+  // computes a different digest, failing verification.
+  w.writeU8(ADDR_STANDARD_DISC)
+  w.writeFixedBytes(submitter, 28)
+  w.writeU64(timestamp)
+
+  return sha256.create().update(w.bytes()).digest()
+}
+
+/** Sign an [`attestationDigest`] with a 32-byte ed25519 private key. */
+export interface SignAttestationParams extends AttestationDigestParams {
+  /**
+   * 32-byte ed25519 seed. Accepts `Uint8Array` or 64-char hex
+   * (`0x`-prefix optional). Same form `keypairFromPrivateKey`
+   * accepts.
+   */
+  privateKey: string | Uint8Array
+}
+
+/**
+ * Compute the canonical attestation digest and sign it.
+ *
+ * Returns an [`AttestorSignature`] (pubkey + 64-byte ed25519 sig)
+ * shaped for `signSubmitAttestation.signatures`. The natural M-of-N
+ * flow is: each attestor runs `signAttestation(...)` on their own
+ * machine, the submitter concatenates the returned signatures, and
+ * the submitter calls `signSubmitAttestation` with the array.
+ */
+export function signAttestation(params: SignAttestationParams): AttestorSignature {
+  const digest = attestationDigest(params)
+  const sk =
+    typeof params.privateKey === 'string' ? hexToBytes(params.privateKey) : params.privateKey
+  if (sk.length !== 32) {
+    throw new Error(`expected 32-byte private key, got ${sk.length} bytes`)
+  }
+  const { publicKey } = keypairFromPrivateKey(sk)
+  const sig = signMessage(digest, sk)
+  return { pubkey: publicKey, sig }
+}
+
+/**
+ * Derive the bech32m `lpk1...` public key form from a 32-byte ed25519
+ * private key. Convenience wrapper around `keypairFromPrivateKey`
+ * for the common case of "I have an attestor's private key on disk
+ * and want to tell the operator the lpk1 to feed into
+ * `register-attestor-set --members`."
+ */
+export function pubkeyBech32FromPrivateKey(privateKey: string | Uint8Array): string {
+  const sk = typeof privateKey === 'string' ? hexToBytes(privateKey) : privateKey
+  if (sk.length !== 32) {
+    throw new Error(`expected 32-byte private key, got ${sk.length} bytes`)
+  }
+  return encodePubKey(keypairFromPrivateKey(sk).publicKey)
 }
 
 // ---- Builders --------------------------------------------------------------

@@ -105,6 +105,9 @@ export {
   decodePubKey,
   deriveAttestorSetId,
   deriveSchemaId,
+  attestationDigest,
+  signAttestation,
+  pubkeyBech32FromPrivateKey,
   signRegisterAttestorSet,
   signRegisterSchema,
   signSubmitAttestation,
@@ -112,6 +115,8 @@ export {
 } from './attestation.js'
 export type {
   AttestorSignature,
+  AttestationDigestParams,
+  SignAttestationParams,
   SignRegisterAttestorSetParams,
   SignRegisterSchemaParams,
   SignSubmitAttestationParams,
