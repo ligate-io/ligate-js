@@ -322,9 +322,7 @@ export function attestationDigest(params: AttestationDigestParams): Uint8Array {
   const schemaId = idToBytes(params.schemaId, SCHEMA_HRP)
   const payloadHash = idToBytes(params.payloadHash, PAYLOAD_HASH_HRP)
   const submitter =
-    params.submitter instanceof Uint8Array
-      ? params.submitter
-      : decodeAddress(params.submitter)
+    params.submitter instanceof Uint8Array ? params.submitter : decodeAddress(params.submitter)
   if (submitter.length !== 28) {
     throw new Error(`submitter address must be 28 bytes; got ${submitter.length}`)
   }
@@ -364,7 +362,8 @@ export interface SignAttestationParams extends AttestationDigestParams {
  */
 export function signAttestation(params: SignAttestationParams): AttestorSignature {
   const digest = attestationDigest(params)
-  const sk = typeof params.privateKey === 'string' ? hexToBytes(params.privateKey) : params.privateKey
+  const sk =
+    typeof params.privateKey === 'string' ? hexToBytes(params.privateKey) : params.privateKey
   if (sk.length !== 32) {
     throw new Error(`expected 32-byte private key, got ${sk.length} bytes`)
   }
