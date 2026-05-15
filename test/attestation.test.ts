@@ -29,17 +29,20 @@ import {
   RUNTIME_ATTESTATION_DISC,
   SCHEMA_HRP,
   SUBMIT_ATTESTATION_DISC,
+  attestationDigest,
   decodeAttestorSetId,
   decodeSchemaId,
   deriveAttestorSetId,
   deriveSchemaId,
   encodeAttestorSetId,
   encodeSchemaId,
+  pubkeyBech32FromPrivateKey,
+  signAttestation,
   signRegisterAttestorSet,
   signRegisterSchema,
   signSubmitAttestation,
 } from '../src/attestation.js'
-import { keypairFromPrivateKey } from '../src/keys.js'
+import { bytesToHex as keysBytesToHex, keypairFromPrivateKey } from '../src/keys.js'
 
 const DEV_PRIVATE_KEY = '01'.repeat(32)
 const DUMMY_CHAIN_HASH = 'bb'.repeat(32)
@@ -57,6 +60,60 @@ function hexToBytes(hex: string): Uint8Array {
 function runtimeCallSlice(envelope: Uint8Array, expectedLen: number): Uint8Array {
   return envelope.slice(ENVELOPE_HEADER_LEN, ENVELOPE_HEADER_LEN + expectedLen)
 }
+
+describe('attestationDigest / signAttestation', () => {
+  // Canonical test vector from `docs/protocol/attestation-v0.md`
+  // §wire-format in the chain repo. Same vector is asserted on by
+  // the Rust `attestation_digest` doctest, so any drift between the
+  // two implementations is caught at CI time.
+  const SCHEMA_ID_HEX = '1c24a84b8307ff2a9e859218d76476932555b5214f8c1c555224b620f8b19486'
+  const PAYLOAD_HASH_HEX = 'be6aa821d3f6c3405edcb7cddbcf419e00119e321c6fb46452281dafd55913ac'
+  const SUBMITTER_BECH32 = 'lig1zd9j2z6x55ydnv9m8f0pdw3vs2j8u0w5sdqeaf478dzp6s998ac'
+  const EXPECTED_DIGEST_HEX = 'b26c0c1698c07e97f3f426ccbdc61ae16dee6f13b780d59c612c7c2b6ba3a079'
+
+  it('produces the LIP-5 canonical digest', () => {
+    const digest = attestationDigest({
+      schemaId: hexToBytes(SCHEMA_ID_HEX),
+      payloadHash: hexToBytes(PAYLOAD_HASH_HEX),
+      submitter: SUBMITTER_BECH32,
+      timestamp: 0n,
+    })
+    expect(keysBytesToHex(digest)).toBe(EXPECTED_DIGEST_HEX)
+  })
+
+  it('accepts mixed input forms for schema/payload/submitter', () => {
+    const lscId = encodeSchemaId(hexToBytes(SCHEMA_ID_HEX))
+    const digest = attestationDigest({
+      schemaId: lscId,
+      payloadHash: PAYLOAD_HASH_HEX,
+      submitter: SUBMITTER_BECH32,
+    })
+    expect(keysBytesToHex(digest)).toBe(EXPECTED_DIGEST_HEX)
+  })
+
+  it('signs the digest with the attestor key', () => {
+    const attestorPriv = '01'.repeat(32)
+    const sig = signAttestation({
+      privateKey: attestorPriv,
+      schemaId: hexToBytes(SCHEMA_ID_HEX),
+      payloadHash: hexToBytes(PAYLOAD_HASH_HEX),
+      submitter: SUBMITTER_BECH32,
+      timestamp: 0n,
+    })
+    expect(sig.pubkey.length).toBe(32)
+    expect(sig.sig.length).toBe(64)
+    // pubkey matches keypairFromPrivateKey derivation.
+    expect(keysBytesToHex(sig.pubkey)).toBe(
+      keysBytesToHex(keypairFromPrivateKey(attestorPriv).publicKey),
+    )
+  })
+
+  it('pubkeyBech32FromPrivateKey roundtrips', () => {
+    const pk = '01'.repeat(32)
+    const lpk = pubkeyBech32FromPrivateKey(pk)
+    expect(lpk.startsWith('lpk1')).toBe(true)
+  })
+})
 
 describe('discriminants', () => {
   it('pins the chain-side discriminants', () => {
