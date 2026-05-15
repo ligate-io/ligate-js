@@ -1,6 +1,6 @@
 # ligate-js
 
-[![CI](https://github.com/ligate-io/ligate-js/actions/workflows/ci.yml/badge.svg)](https://github.com/ligate-io/ligate-js/actions/workflows/ci.yml) [![License: Apache-2.0 OR MIT](https://img.shields.io/badge/license-Apache--2.0_OR_MIT-blue.svg)](#license) [![Chain](https://img.shields.io/badge/chain-ligate--devnet--1-A7D28C.svg)](https://github.com/ligate-io/ligate-chain) [![Docs](https://img.shields.io/badge/docs-docs.ligate.io-A7D28C.svg)](https://docs.ligate.io) [![Pre-devnet](https://img.shields.io/badge/status-pre--devnet-E8833A.svg)](#status)
+[![CI](https://github.com/ligate-io/ligate-js/actions/workflows/ci.yml/badge.svg)](https://github.com/ligate-io/ligate-js/actions/workflows/ci.yml) [![License: Apache-2.0 OR MIT](https://img.shields.io/badge/license-Apache--2.0_OR_MIT-blue.svg)](#license) [![Chain](https://img.shields.io/badge/chain-ligate--devnet--1-A7D28C.svg)](https://github.com/ligate-io/ligate-chain) [![Docs](https://img.shields.io/badge/docs-docs.ligate.io-A7D28C.svg)](https://docs.ligate.io) [![Devnet](https://img.shields.io/badge/status-devnet-A7D28C.svg)](#status)
 
 TypeScript SDK for [Ligate Chain](https://github.com/ligate-io/ligate-chain). Build, sign, submit transactions; query state; manage keys. Browser and Node compatible. Zero-dep on `Buffer`.
 
@@ -206,9 +206,9 @@ The chain-side test vector is the localnet dev key (`devnet/local-dev-key.json`,
 
 ## Status
 
-**Pre-devnet.** `ligate-devnet-1` is targeted for **Q2 2026**. Tracking issue: [`ligate-chain#112`](https://github.com/ligate-io/ligate-chain/issues/112).
+**Devnet.** `ligate-devnet-1` is live.
 
-Latest devnet-aligned release: [`v0.1.0-devnet`](https://github.com/ligate-io/ligate-js/releases/tag/v0.1.0-devnet), cut alongside `ligate-chain` `v0.1.0-devnet`. Installable from npm as `@ligate-labs/sdk@rc` or `@0.1.0-devnet`. The `Pre-devnet` badge above flips once a 24–48h public soak on Mocha completes and a wire-format-stable `0.1.0` (no suffix) lands on the `latest` dist-tag; tracking issue [`ligate-js#28`](https://github.com/ligate-io/ligate-js/issues/28).
+Latest devnet-aligned release: [`v0.1.0-devnet`](https://github.com/ligate-io/ligate-js/releases/tag/v0.1.0-devnet), cut alongside `ligate-chain` `v0.1.0-devnet`. Installable from npm as `@ligate-labs/sdk@rc` or `@0.1.0-devnet`.
 
 Versioning: anything tagged `0.1.x-devnet` may still break wire format between releases as the chain settles. Pin exact versions if you depend on byte-level stability. Post-soak `0.1.0` (no suffix) is the first version where minor-version SemVer applies — patch bumps are guaranteed wire-compatible inside `0.1.x`.
 
