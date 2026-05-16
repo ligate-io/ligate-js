@@ -13,6 +13,24 @@ Release body. Keep section headings in the format `## [X.Y.Z] - YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.1.1-devnet] - 2026-05-16
+
+Attestor-side helpers + repo hygiene. Adds the attestor half of the attestation flow that was missing in `0.1.0-devnet`: anyone building a quorum signer in TypeScript (Mneme, third-party attestor services, custodial wallets adding attestation flows) can now compute the canonical digest, sign it, and derive `lpk1...` pubkeys without rolling their own ed25519+borsh+sha256.
+
+Install: `npm install @ligate-labs/sdk@0.1.1-devnet` (or `@rc` for the devnet rc dist-tag).
+
+### Added
+
+- `attestationDigest({ schemaId, payloadHash, submitter, timestamp })`. Computes the canonical `SHA-256(borsh(SignedAttestationPayload))` digest the chain re-derives at submission time. Handles the `MultiAddress::Standard` 0x00 discriminator correctly (the most common drift point between off-chain signers and the on-chain verifier). (#31)
+- `signAttestation({ privateKey, ...digestParams })`. Convenience wrapper: builds the digest, signs with ed25519, returns an `AttestorSignature` shaped for `signSubmitAttestation.signatures`. The full attestor → submitter pipeline now reads as: attestors run `signAttestation` and ship the signature; submitter aggregates and runs `signSubmitAttestation`. (#31)
+- `pubkeyBech32FromPrivateKey(privateKey)`. Derives the `lpk1...` bech32m public key from a 32-byte ed25519 seed. This is the form `register-attestor-set --members` expects, so attestor onboarding no longer requires hand-rolling the bech32m encoding. Matches the new `ligate keys show --pubkey` flag in `ligate-cli` `v0.1.2-devnet`. (#31)
+- Cross-impl parity test asserting on the canonical LIP-5 test vector from `docs/protocol/attestation-v0.md` §wire-format. Same vector is baked into the Rust `ligate-client` `attestation_digest` doctest in `ligate-chain` #351, so any drift between the two SDKs breaks CI on whichever side drifted. (#31)
+- `.pre-commit-config.yaml` running prettier locally at commit time. Matches the chain repo + api repo patterns. (#32)
+
+### Changed
+
+- `AttestationDigestParams` and `SignAttestationParams` exported from the package barrel (`src/index.ts`). Callers can `import type` without reaching into the internal module path. (#31)
+
 ## [0.1.0-devnet] - 2026-05-15
 
 First devnet-aligned release. Cut alongside `ligate-chain` `v0.1.0-devnet`, `ligate-cli` `v0.1.0-devnet`, and the `ligate-devnet-1` public rung. Ships under the `rc` npm dist-tag; `latest` stays on `0.0.2` until the wire format locks and a clean `0.1.0` (no suffix) lands.

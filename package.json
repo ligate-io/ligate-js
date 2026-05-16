@@ -1,6 +1,6 @@
 {
   "name": "@ligate-labs/sdk",
-  "version": "0.1.0-devnet",
+  "version": "0.1.1-devnet",
   "description": "TypeScript SDK for Ligate Chain. Build-sign-submit transactions, query state, manage keys.",
   "homepage": "https://ligate.io",
   "repository": {
