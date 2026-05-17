@@ -77,7 +77,7 @@ test.describe('@ligate-labs/sdk in the browser', () => {
         tokenId: 'token_1nyl0e0yweragfsatygt24zmd8jrr2vqtvdfptzjhxkguz2xxx3vs0y07u7',
         nonce: 0n,
         chainId: 4242n,
-        chainHash: 'lsch1amq80arndh6zehd4gu3kg6x66vh3l45z924dr6pzeevkxp649heqe5c70v',
+        chainHash: '__NEW_CHAIN_HASH_PENDING_REGENESIS__',
         maxFeeNano: sdk.DEFAULT_MAX_FEE_NANO,
       })
       return sdk.bytesToHex(signed)
