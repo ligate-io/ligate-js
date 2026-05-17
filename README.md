@@ -8,19 +8,15 @@ TypeScript SDK for [Ligate Chain](https://github.com/ligate-io/ligate-chain). Bu
 
 ### Install
 
-**Not yet on npm.** The `@ligate-labs/sdk` package has not been published to the registry yet (the `rc` dist-tag does not exist). Until the first npm publish, consume the SDK from git or as a local `file://` dep:
-
 ```bash
-# Pin to a git tag in your package.json:
-pnpm add github:ligate-io/ligate-js#v0.1.1-devnet
-# or pin to a commit SHA for byte-level reproducibility:
-pnpm add github:ligate-io/ligate-js#<sha>
-
-# Or, for local development against a checkout:
-pnpm add file:../ligate-js
+pnpm add @ligate-labs/sdk
+# or:
+npm install @ligate-labs/sdk
+# or:
+yarn add @ligate-labs/sdk
 ```
 
-`npm install` and `yarn add` accept the same `github:` and `file:` syntaxes. This section will be replaced with `pnpm add @ligate-labs/sdk` (or `@rc`) once the first npm publish lands; tracked alongside the post-soak `0.1.0` (no suffix) cut.
+Latest published version: `0.2.0` (the `latest` dist-tag), wire-compatible with `ligate-chain` v0.2.0 (lat1 `AttestationId`). Pin to `^0.2.0` for minor-bump compatibility. The historical `rc` dist-tag points at `0.1.1-devnet`, which is pre-lat1 and wire-incompatible with current devnet; avoid pinning to `@rc`. Local checkouts work via `pnpm add file:../ligate-js` if you're contributing.
 
 ### Use
 
@@ -209,13 +205,13 @@ The chain-side test vector is the localnet dev key (`devnet/local-dev-key.json`,
 
 **Devnet.** `ligate-devnet-1` is live.
 
-Latest devnet-aligned release: [`v0.1.1-devnet`](https://github.com/ligate-io/ligate-js/releases/tag/v0.1.1-devnet), cut alongside `ligate-chain` `v0.1.1-devnet`. Not yet published to npm; install via `github:ligate-io/ligate-js#v0.1.1-devnet` (see [Install](#install)) until the first npm publish lands.
+Latest release: [`v0.2.0`](https://github.com/ligate-io/ligate-js/releases/tag/v0.2.0), published to npm as `@ligate-labs/sdk@0.2.0` (the `latest` dist-tag), wire-compatible with `ligate-chain` v0.2.0.
 
 ### Versioning
 
-Going forward, releases drop the `-devnet` suffix per the convention adopted in [`ligate-chain#374`](https://github.com/ligate-io/ligate-chain/pull/374). Plain semver tags (`v0.1.x`, `v0.2.x`, ...) for the package, with network identity carried in `chain_id` rather than the package version. Past `-devnet` tags stay as archaeology. The next SDK cut (`v0.1.2` or higher) is the first to land on the new scheme alongside `ligate-chain` `v0.1.3`.
+Plain semver, no network-name suffix on the package version. Per the convention in [`ligate-chain#374`](https://github.com/ligate-io/ligate-chain/pull/374), network identity lives in `chain_id` (`ligate-devnet-1`, future `ligate-testnet-1` / `ligate-mainnet-1`), not in the package version. Past `-devnet` tags (`v0.1.0-devnet`, `v0.1.1-devnet`) stay as archaeology.
 
-Anything tagged `0.1.x-devnet` may still break wire format between releases as the chain settles. Pin exact versions if you depend on byte-level stability. Post-soak `0.1.0` (no suffix) is the first version where minor-version SemVer applies; patch bumps are guaranteed wire-compatible inside `0.1.x`.
+Pre-1.0 (`v0.x.y`) is "may break in minor versions". v0.2.0 in particular collapsed `AttestationId` from compound `<schema_id>:<payload_hash>` to single bech32m `lat1...`; consumers pinning `^0.1.0` will NOT auto-upgrade to v0.2.0 and need to bump intentionally. After v1.0, minor bumps are guaranteed wire-compatible.
 
 ## Related repos
 
