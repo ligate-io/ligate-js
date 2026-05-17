@@ -91,6 +91,15 @@ export const SCHEMA_HRP = 'lsc'
 export const PAYLOAD_HASH_HRP = 'lph'
 /** HRP for `PubKey` bech32m strings (`lpk1...`). */
 export const PUBKEY_HRP = 'lpk'
+/**
+ * HRP for `AttestationId` bech32m strings (`lat1...`).
+ *
+ * Shipped in chain v0.2.0 (ligate-io/ligate-chain#381). Pre-v0.2.0
+ * attestations used the compound `<schema_id>:<payload_hash>`
+ * (`lsc1...:lph1...`) form. v0.2.0 collapses this to a single 32-byte
+ * SHA-256 hash of the two halves concatenated.
+ */
+export const ATTESTATION_HRP = 'lat'
 
 /** All attestation ids are 32 bytes underneath. */
 export const ATTESTATION_ID_BYTE_LENGTH = 32
@@ -155,6 +164,49 @@ export function encodePayloadHash(bytes: Uint8Array): string {
 /** Decode `lph1...` to 32 raw bytes. */
 export function decodePayloadHash(s: string): Uint8Array {
   return decodeId(PAYLOAD_HASH_HRP, s)
+}
+
+/** Encode 32 raw bytes as `lat1...`. */
+export function encodeAttestationId(bytes: Uint8Array): string {
+  return encodeId(ATTESTATION_HRP, bytes)
+}
+
+/** Decode `lat1...` to 32 raw bytes. */
+export function decodeAttestationId(s: string): Uint8Array {
+  return decodeId(ATTESTATION_HRP, s)
+}
+
+/**
+ * Derive the canonical `AttestationId` (`lat1...`) for a
+ * `(schemaId, payloadHash)` pair.
+ *
+ * Mirrors the chain reference in
+ * `crates/modules/attestation/src/lib.rs::AttestationId::from_pair`:
+ * `SHA-256(schema_id_bytes ‖ payload_hash_bytes)`, bech32m-encoded
+ * with the `lat` HRP. Inputs are the raw 32-byte underlying hashes,
+ * NOT the bech32 display strings.
+ *
+ * Either argument may be passed as a bech32m string (`lsc1...` /
+ * `lph1...`) or as raw `Uint8Array` bytes; this helper normalizes.
+ */
+export function computeAttestationId(
+  schemaId: string | Uint8Array,
+  payloadHash: string | Uint8Array,
+): string {
+  const sidBytes = schemaId instanceof Uint8Array ? schemaId : decodeSchemaId(schemaId)
+  const phBytes = payloadHash instanceof Uint8Array ? payloadHash : decodePayloadHash(payloadHash)
+  if (sidBytes.length !== ATTESTATION_ID_BYTE_LENGTH) {
+    throw new Error(`expected ${ATTESTATION_ID_BYTE_LENGTH}-byte schemaId, got ${sidBytes.length}`)
+  }
+  if (phBytes.length !== ATTESTATION_ID_BYTE_LENGTH) {
+    throw new Error(
+      `expected ${ATTESTATION_ID_BYTE_LENGTH}-byte payloadHash, got ${phBytes.length}`,
+    )
+  }
+  const hasher = sha256.create()
+  hasher.update(sidBytes)
+  hasher.update(phBytes)
+  return encodeAttestationId(hasher.digest())
 }
 
 /** Encode a 32-byte ed25519 pubkey as `lpk1...`. */
@@ -614,7 +666,7 @@ function compareBytes(a: Uint8Array, b: Uint8Array): number {
 export function attestationIdToHex(value: string | Uint8Array): string {
   if (value instanceof Uint8Array) return bytesToHex(value)
   // Try each HRP; if it matches one, decode + re-hex.
-  for (const hrp of [ATTESTOR_SET_HRP, SCHEMA_HRP, PAYLOAD_HASH_HRP, PUBKEY_HRP]) {
+  for (const hrp of [ATTESTOR_SET_HRP, SCHEMA_HRP, PAYLOAD_HASH_HRP, PUBKEY_HRP, ATTESTATION_HRP]) {
     if (value.startsWith(`${hrp}1`)) {
       return bytesToHex(decodeId(hrp, value))
     }

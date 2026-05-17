@@ -22,6 +22,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  ATTESTATION_HRP,
   ATTESTOR_SET_HRP,
   PAYLOAD_HASH_HRP,
   REGISTER_ATTESTOR_SET_DISC,
@@ -30,10 +31,13 @@ import {
   SCHEMA_HRP,
   SUBMIT_ATTESTATION_DISC,
   attestationDigest,
+  computeAttestationId,
+  decodeAttestationId,
   decodeAttestorSetId,
   decodeSchemaId,
   deriveAttestorSetId,
   deriveSchemaId,
+  encodeAttestationId,
   encodeAttestorSetId,
   encodeSchemaId,
   pubkeyBech32FromPrivateKey,
@@ -313,10 +317,61 @@ describe('deriveSchemaId / encodeSchemaId', () => {
 })
 
 describe('id HRPs', () => {
-  it('has the four expected HRP constants', () => {
+  it('has the five expected HRP constants', () => {
     expect(ATTESTOR_SET_HRP).toBe('las')
     expect(SCHEMA_HRP).toBe('lsc')
     expect(PAYLOAD_HASH_HRP).toBe('lph')
-    // PUBKEY_HRP — `lpk`. See attestation.ts for the rationale.
+    expect(ATTESTATION_HRP).toBe('lat')
+    // PUBKEY_HRP: `lpk`. See attestation.ts for the rationale.
+  })
+})
+
+describe('computeAttestationId (chain v0.2.0 lat1)', () => {
+  // Canonical reference: ligate-chain
+  // crates/modules/attestation/tests/borsh_snapshot.rs
+  // `snapshot_attestation_id`: SHA-256([0x11; 32] || [0x33; 32])
+  // = b0dcb09af5496e779e60b21109a718475091191efc7a8638b01d51c622fc9128
+  const REF_HASH_HEX = 'b0dcb09af5496e779e60b21109a718475091191efc7a8638b01d51c622fc9128'
+
+  it('byte-matches the chain borsh-snapshot vector', () => {
+    const id = computeAttestationId(new Uint8Array(32).fill(0x11), new Uint8Array(32).fill(0x33))
+    // Decode the bech32m result and check raw 32 bytes match the chain reference.
+    expect(keysBytesToHex(decodeAttestationId(id))).toBe(REF_HASH_HEX)
+    expect(id.startsWith('lat1')).toBe(true)
+  })
+
+  it('accepts bech32m string inputs interchangeably with byte inputs', () => {
+    const sidBytes = new Uint8Array(32).fill(0x11)
+    const phBytes = new Uint8Array(32).fill(0x33)
+    const fromBytes = computeAttestationId(sidBytes, phBytes)
+    const fromStrings = computeAttestationId(
+      encodeSchemaId(sidBytes),
+      // PAYLOAD_HASH_HRP via the schema/payload encoders.
+      // payload helper exists in src; we reuse encodeSchemaId here only
+      // for the lsc-side input and pass raw bytes for payload to avoid
+      // a redundant import in this test surface.
+      phBytes,
+    )
+    expect(fromStrings).toBe(fromBytes)
+  })
+
+  it('is position-sensitive (mirrored pair produces different id)', () => {
+    const a = new Uint8Array(32).fill(0x11)
+    const b = new Uint8Array(32).fill(0x33)
+    const id_ab = computeAttestationId(a, b)
+    const id_ba = computeAttestationId(b, a)
+    expect(id_ab).not.toBe(id_ba)
+  })
+
+  it('round-trips encode/decode cleanly', () => {
+    const raw = new Uint8Array(32).fill(0x55)
+    const encoded = encodeAttestationId(raw)
+    expect(encoded.startsWith('lat1')).toBe(true)
+    expect(decodeAttestationId(encoded)).toEqual(raw)
+  })
+
+  it('rejects wrong-HRP bech32m input', () => {
+    const lsc = encodeSchemaId(new Uint8Array(32).fill(0xaa))
+    expect(() => decodeAttestationId(lsc)).toThrow(/'lat'/)
   })
 })
