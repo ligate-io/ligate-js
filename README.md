@@ -8,18 +8,19 @@ TypeScript SDK for [Ligate Chain](https://github.com/ligate-io/ligate-chain). Bu
 
 ### Install
 
-```bash
-# Devnet-aligned release (current `ligate-devnet-1` wire format).
-# Ships under the `rc` dist-tag; `latest` stays on the previous
-# stable until the wire format locks for a `0.1.0` (no suffix) cut.
-pnpm add @ligate-labs/sdk@rc
-# or pin exactly: pnpm add @ligate-labs/sdk@0.1.0-devnet
+**Not yet on npm.** The `@ligate-labs/sdk` package has not been published to the registry yet (the `rc` dist-tag does not exist). Until the first npm publish, consume the SDK from git or as a local `file://` dep:
 
-# Last `latest` (pre-devnet, pre-bech32m):
-pnpm add @ligate-labs/sdk
+```bash
+# Pin to a git tag in your package.json:
+pnpm add github:ligate-io/ligate-js#v0.1.1-devnet
+# or pin to a commit SHA for byte-level reproducibility:
+pnpm add github:ligate-io/ligate-js#<sha>
+
+# Or, for local development against a checkout:
+pnpm add file:../ligate-js
 ```
 
-Both forms work with `npm install` / `yarn add` interchangeably.
+`npm install` and `yarn add` accept the same `github:` and `file:` syntaxes. This section will be replaced with `pnpm add @ligate-labs/sdk` (or `@rc`) once the first npm publish lands; tracked alongside the post-soak `0.1.0` (no suffix) cut.
 
 ### Use
 
@@ -57,7 +58,7 @@ console.log('tx hash:', result.txHash)
 console.log('included on chain:', result.included)
 ```
 
-The `/v1` prefix on the RPC URL is auto-appended idempotently, so `http://host:port`, `http://host:port/`, and `http://host:port/v1` all work the same way. Mirrors the cli (`GlobalArgs::rpc_with_v1`) and faucet (`Signer::new`) so all three SDKs normalize the same way.
+The `/v1` prefix on the RPC URL is auto-appended idempotently, so `http://host:port`, `http://host:port/`, and `http://host:port/v1` all work the same way. Mirrors the cli (`GlobalArgs::rpc_with_v1`) and ligate-api (`Signer::new_with_chain_seed`) so all three SDKs normalize the same way.
 
 ## Lower-level API
 
@@ -208,9 +209,13 @@ The chain-side test vector is the localnet dev key (`devnet/local-dev-key.json`,
 
 **Devnet.** `ligate-devnet-1` is live.
 
-Latest devnet-aligned release: [`v0.1.0-devnet`](https://github.com/ligate-io/ligate-js/releases/tag/v0.1.0-devnet), cut alongside `ligate-chain` `v0.1.0-devnet`. Installable from npm as `@ligate-labs/sdk@rc` or `@0.1.0-devnet`.
+Latest devnet-aligned release: [`v0.1.1-devnet`](https://github.com/ligate-io/ligate-js/releases/tag/v0.1.1-devnet), cut alongside `ligate-chain` `v0.1.1-devnet`. Not yet published to npm; install via `github:ligate-io/ligate-js#v0.1.1-devnet` (see [Install](#install)) until the first npm publish lands.
 
-Versioning: anything tagged `0.1.x-devnet` may still break wire format between releases as the chain settles. Pin exact versions if you depend on byte-level stability. Post-soak `0.1.0` (no suffix) is the first version where minor-version SemVer applies — patch bumps are guaranteed wire-compatible inside `0.1.x`.
+### Versioning
+
+Going forward, releases drop the `-devnet` suffix per the convention adopted in [`ligate-chain#374`](https://github.com/ligate-io/ligate-chain/pull/374). Plain semver tags (`v0.1.x`, `v0.2.x`, ...) for the package, with network identity carried in `chain_id` rather than the package version. Past `-devnet` tags stay as archaeology. The next SDK cut (`v0.1.2` or higher) is the first to land on the new scheme alongside `ligate-chain` `v0.1.3`.
+
+Anything tagged `0.1.x-devnet` may still break wire format between releases as the chain settles. Pin exact versions if you depend on byte-level stability. Post-soak `0.1.0` (no suffix) is the first version where minor-version SemVer applies; patch bumps are guaranteed wire-compatible inside `0.1.x`.
 
 ## Related repos
 
