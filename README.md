@@ -16,7 +16,7 @@ npm install @ligate-labs/sdk
 yarn add @ligate-labs/sdk
 ```
 
-Latest published version: `0.2.0` (the `latest` dist-tag), wire-compatible with `ligate-chain` v0.2.0 (lat1 `AttestationId`). Pin to `^0.2.0` for minor-bump compatibility. The historical `rc` dist-tag points at `0.1.1-devnet`, which is pre-lat1 and wire-incompatible with current devnet; avoid pinning to `@rc`. Local checkouts work via `pnpm add file:../ligate-js` if you're contributing.
+Latest published version: `0.2.0` (the `latest` dist-tag), wire-compatible with `ligate-chain` v0.2.0 → v0.2.3 (current). The lat1 `AttestationId` wire format from v0.2.0 still holds; v0.2.1/v0.2.2/v0.2.3 were additive non-breaking chain patches (openapi info, batch `da_block_height`) — the SDK doesn't need a republish to consume them. Pin to `^0.2.0` for minor-bump compatibility. The historical `rc` dist-tag points at `0.1.1-devnet`, which is pre-lat1 and wire-incompatible with current devnet; avoid pinning to `@rc`. Local checkouts work via `pnpm add file:../ligate-js` if you're contributing.
 
 ### Use
 
@@ -205,7 +205,7 @@ The chain-side test vector is the localnet dev key (`devnet/local-dev-key.json`,
 
 **Devnet.** `ligate-devnet-1` is live.
 
-Latest release: [`v0.2.0`](https://github.com/ligate-io/ligate-js/releases/tag/v0.2.0), published to npm as `@ligate-labs/sdk@0.2.0` (the `latest` dist-tag), wire-compatible with `ligate-chain` v0.2.0.
+Latest release: [`v0.2.0`](https://github.com/ligate-io/ligate-js/releases/tag/v0.2.0), published to npm as `@ligate-labs/sdk@0.2.0` (the `latest` dist-tag), wire-compatible with `ligate-chain` v0.2.0 → v0.2.3 (additive chain patches don't require an SDK republish; lat1 wire format is the wire contract).
 
 ### Versioning
 
