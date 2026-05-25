@@ -1,7 +1,7 @@
 /**
  * TokenId hex ↔ bech32m round-trip tests.
  *
- * Anchor: the chain's checked-in $LGT gas-token-id at devnet
+ * Anchor: the chain's checked-in AVOW gas-token-id at devnet
  * genesis is `token_1nyl0e0yweragfsatygt24zmd8jrr2vqtvdfptzjhxkguz2xxx3vs0y07u7`
  * (per `crates/modules/bank/genesis.rs:185` in the Sovereign SDK
  * test fixture). We pin the round-trip from that exact value to
@@ -22,7 +22,7 @@ import {
   tokenIdToHex,
 } from '../src/token.js'
 
-// Canonical $LGT gas-token id from the SDK's bank-genesis test fixture.
+// Canonical AVOW gas-token id from the SDK's bank-genesis test fixture.
 const LGT_BECH32M = 'token_1nyl0e0yweragfsatygt24zmd8jrr2vqtvdfptzjhxkguz2xxx3vs0y07u7'
 
 describe('encodeTokenIdBech32m / decodeTokenIdBech32m', () => {
@@ -35,7 +35,7 @@ describe('encodeTokenIdBech32m / decodeTokenIdBech32m', () => {
     expect(decoded).toEqual(bytes)
   })
 
-  it('decodes the canonical $LGT id without throwing', () => {
+  it('decodes the canonical AVOW id without throwing', () => {
     const bytes = decodeTokenIdBech32m(LGT_BECH32M)
     expect(bytes).toHaveLength(TOKEN_ID_BYTE_LENGTH)
     // Re-encoding should reproduce the original string.
@@ -48,7 +48,7 @@ describe('encodeTokenIdBech32m / decodeTokenIdBech32m', () => {
   })
 
   it('rejects a bech32m string with a different HRP', () => {
-    // Re-encode the LGT bytes with the chain's address HRP (`lig`) and
+    // Re-encode the AVOW bytes with the chain's address HRP (`lig`) and
     // try to decode it as a token. Should fail on prefix.
     const bytes = decodeTokenIdBech32m(LGT_BECH32M)
     const ligEncoded =
@@ -86,7 +86,7 @@ describe('tokenIdToBytes (coercion)', () => {
     expect(tokenIdToBytes(encoded)).toEqual(bytes)
   })
 
-  it('decodes the canonical $LGT id', () => {
+  it('decodes the canonical AVOW id', () => {
     const out = tokenIdToBytes(LGT_BECH32M)
     expect(out).toHaveLength(TOKEN_ID_BYTE_LENGTH)
   })
@@ -127,7 +127,7 @@ describe('tokenIdToBech32m (coercion)', () => {
   })
 
   it('rejects a malformed `token_...` string by throwing on round-trip', () => {
-    // Mutate one char in the canonical LGT id to break the checksum.
+    // Mutate one char in the canonical AVOW id to break the checksum.
     const bad = LGT_BECH32M.slice(0, -1) + (LGT_BECH32M.endsWith('7') ? '8' : '7')
     expect(() => tokenIdToBech32m(bad)).toThrow()
   })

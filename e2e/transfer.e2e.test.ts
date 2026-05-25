@@ -34,7 +34,7 @@
  *
  * - `getRollupInfo()` reaches the chain and returns a non-zero
  *   `chain_hash` (proves chain is live)
- * - `submitTransfer()` builds + signs + submits a 1 LGT transfer
+ * - `submitTransfer()` builds + signs + submits a 1 AVOW transfer
  *   from the chain's dev key to a fresh recipient
  * - The recipient's balance reflects the transfer post-inclusion
  *
@@ -45,7 +45,7 @@
  * - private_key: `0x0101...01` (32 bytes, all 0x01)
  * - address: `lig132yw8ht5p8cetl2jmvknewjawt9xwzdlrk2pyxlnwjyqz3m499u`
  *
- * Pre-funded with 10000 LGT in `ligate-chain/devnet/genesis/bank.json`.
+ * Pre-funded with 10000 AVOW in `ligate-chain/devnet/genesis/bank.json`.
  * See chain repo PR #247 for the dev-key ceremony.
  */
 
@@ -69,7 +69,7 @@ const DEFAULT_RPC = 'http://localhost:12346'
 const DEFAULT_CHAIN_ID = 4242n
 const DEFAULT_TOKEN_ID =
   process.env.LIGATE_E2E_TOKEN_ID ||
-  // Localnet $LGT token id — pulled from
+  // Localnet AVOW token id — pulled from
   // `ligate-chain/devnet/genesis/bank.json` (token_1nyl0e...).
   'token_1nyl0e0yweragfsatygt24zmd8jrr2vqtvdfptzjhxkguz2xxx3vs0y07u7'
 
@@ -136,10 +136,10 @@ describe('e2e: transfer against localnet', () => {
     const client = ctx.client!
     const balance = await client.getBalance(DEV_ADDRESS, DEFAULT_TOKEN_ID)
     expect(balance).toBeGreaterThan(0n)
-    console.log(`[e2e] dev key balance: ${balance} nano-LGT`)
+    console.log(`[e2e] dev key balance: ${balance} nano-AVOW`)
   })
 
-  it('transfers 1 LGT from dev key to a fresh recipient and confirms inclusion', async () => {
+  it('transfers 1 AVOW from dev key to a fresh recipient and confirms inclusion', async () => {
     if (skipIfNoChain()) return
     const client = ctx.client!
 
@@ -153,7 +153,7 @@ describe('e2e: transfer against localnet', () => {
     const senderStartBalance = await client.getBalance(sender.address, DEFAULT_TOKEN_ID)
     const senderStartNonce = await client.getNonce(sender.publicKey)
 
-    const transferAmount = 1_000_000_000n // 1 LGT
+    const transferAmount = 1_000_000_000n // 1 AVOW
 
     const result = await submitTransfer({
       rpcUrl: RPC,

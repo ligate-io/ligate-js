@@ -6,7 +6,7 @@
  * the chain's `sov_bank` tests:
  *
  * - `token_1nyl0e0yweragfsatygt24zmd8jrr2vqtvdfptzjhxkguz2xxx3vs0y07u7`
- *   (the canonical $LGT gas-token id at devnet genesis)
+ *   (the canonical AVOW gas-token id at devnet genesis)
  * - `token_1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnfxkwm`
  *   (a deterministic test fixture, all-zero bytes)
  *

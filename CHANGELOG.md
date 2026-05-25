@@ -13,6 +13,10 @@ Release body. Keep section headings in the format `## [X.Y.Z] - YYYY-MM-DD`.
 
 ## [Unreleased]
 
+### Changed
+
+- **Renamed token symbol `LGT` → `AVOW` everywhere.** Tracks [`ligate-chain#457`](https://github.com/ligate-io/ligate-chain/issues/457) and aligns with [chain v0.3.0](https://github.com/ligate-io/ligate-chain/releases/tag/v0.3.0). Substitutions cover prose, doc comments, example code, README quickstart, and internal helpers. `$` prefix dropped per the cleaner convention adopted chain-side. **Breaking on the wire**: requires the api side to ship its rename first. Holds for the same cutover window as chain v0.3.0 → devnet-2 boot + [ligate-api#70](https://github.com/ligate-io/ligate-api/pull/70).
+
 ## [0.1.1-devnet] - 2026-05-16
 
 Attestor-side helpers + repo hygiene. Adds the attestor half of the attestation flow that was missing in `0.1.0-devnet`: anyone building a quorum signer in TypeScript (Mneme, third-party attestor services, custodial wallets adding attestation flows) can now compute the canonical digest, sign it, and derive `lpk1...` pubkeys without rolling their own ed25519+borsh+sha256.

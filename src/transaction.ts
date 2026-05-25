@@ -87,7 +87,7 @@ export interface SignTransferParams {
   publicKey: Uint8Array
   /** Recipient `lig1...` bech32m address. */
   to: string
-  /** Transfer amount in nano-LGT. */
+  /** Transfer amount in nano-AVOW. */
   amountNano: bigint
   /**
    * Token id, in any of three forms:
@@ -113,7 +113,7 @@ export interface SignTransferParams {
    * See [`chainHashToBytes`] for the coercion rules.
    */
   chainHash: string | Uint8Array
-  /** Max fee budget in nano-LGT. Defaults to 100_000_000 (0.1 LGT). */
+  /** Max fee budget in nano-AVOW. Defaults to 100_000_000 (0.1 AVOW). */
   maxFeeNano?: bigint
   /** Priority-fee bips. Defaults to 0. */
   maxPriorityFeeBips?: bigint
