@@ -112,7 +112,7 @@ The SDK takes care of these, but they're worth knowing if you're debugging or ex
 - **Don't pre-wrap.** `signTransfer` returns `borsh(Transaction::V0(Version0))`. The chain's `POST /v1/sequencer/txs` handler wraps in `AuthenticatorInput::Standard(...)` server-side. Pre-wrapping double-wraps and the chain rejects with `Cannot decompress Edwards point`. (See [`ligate-chain#245`](https://github.com/ligate-io/ligate-chain/issues/245).)
 - **Address derivation is `pubkey[..28]`.** First 28 bytes of the 32-byte Ed25519 pubkey, bech32m-encoded with the `lig` HRP. NOT `SHA-256(pubkey)[..28]` — that's how genesis-stub addresses are derived from string labels (and using it for keypair-derived addresses produces `CannotReserveGas("Insufficient balance")` on submit).
 - **Confirmation is HTTP polling, not WebSocket.** `waitForInclusion` polls `GET /v1/ledger/txs/{hash}` every 500ms. The Sovereign SDK's `wait_for_tx_processing` uses a WebSocket subscription that hits a URL-parsing bug (`invalid port value`) on non-standard ports. (See [`ligate-cli#8`](https://github.com/ligate-io/ligate-cli/issues/8).)
-- **Signature is over `borsh(UnsignedTransaction) ++ chain_hash`.** The 32-byte chain hash binds signatures to the runtime version; it comes from `GET /v1/rollup/info`. Without the hash, a signature for `ligate-localnet-1` would also work on `ligate-devnet-1`, which the chain explicitly prevents.
+- **Signature is over `borsh(UnsignedTransaction) ++ chain_hash`.** The 32-byte chain hash binds signatures to the runtime version; it comes from `GET /v1/rollup/info`. Without the hash, a signature for `ligate-localnet-1` would also work on `ligate-devnet-2`, which the chain explicitly prevents.
 
 ## Compatibility
 
@@ -203,13 +203,13 @@ The chain-side test vector is the localnet dev key (`devnet/local-dev-key.json`,
 
 ## Status
 
-**Devnet.** `ligate-devnet-1` is live.
+**Devnet.** `ligate-devnet-2` is live.
 
 Latest release: [`v0.2.0`](https://github.com/ligate-io/ligate-js/releases/tag/v0.2.0), published to npm as `@ligate-labs/sdk@0.2.0` (the `latest` dist-tag), wire-compatible with `ligate-chain` v0.2.0 → v0.2.3 (additive chain patches don't require an SDK republish; lat1 wire format is the wire contract).
 
 ### Versioning
 
-Plain semver, no network-name suffix on the package version. Per the convention in [`ligate-chain#374`](https://github.com/ligate-io/ligate-chain/pull/374), network identity lives in `chain_id` (`ligate-devnet-1`, future `ligate-testnet-1` / `ligate-mainnet-1`), not in the package version. Past `-devnet` tags (`v0.1.0-devnet`, `v0.1.1-devnet`) stay as archaeology.
+Plain semver, no network-name suffix on the package version. Per the convention in [`ligate-chain#374`](https://github.com/ligate-io/ligate-chain/pull/374), network identity lives in `chain_id` (`ligate-devnet-2`, future `ligate-testnet-1` / `ligate-mainnet-1`), not in the package version. Past `-devnet` tags (`v0.1.0-devnet`, `v0.1.1-devnet`) stay as archaeology.
 
 Pre-1.0 (`v0.x.y`) is "may break in minor versions". v0.2.0 in particular collapsed `AttestationId` from compound `<schema_id>:<payload_hash>` to single bech32m `lat1...`; consumers pinning `^0.1.0` will NOT auto-upgrade to v0.2.0 and need to bump intentionally. After v1.0, minor bumps are guaranteed wire-compatible.
 
