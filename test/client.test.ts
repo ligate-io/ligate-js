@@ -94,7 +94,7 @@ describe('LigateClient.getNonce', () => {
 })
 
 describe('LigateClient.getBalance', () => {
-  // Canonical $LGT gas-token id from the SDK's bank-genesis fixture.
+  // Canonical AVOW gas-token id from the SDK's bank-genesis fixture.
   // Used as the test token id below — a real bech32m string so the
   // client's `tokenIdToBech32m` validation round-trip passes.
   const LGT_TOKEN_ID = 'token_1nyl0e0yweragfsatygt24zmd8jrr2vqtvdfptzjhxkguz2xxx3vs0y07u7'
@@ -121,7 +121,7 @@ describe('LigateClient.getBalance', () => {
       return jsonResponse({ token_id: LGT_TOKEN_ID, amount: '0' })
     })
     const client = new LigateClient({ rpcUrl: 'http://x:1', fetch: fetchImpl })
-    // Derive the canonical $LGT id's hex form via the helper itself,
+    // Derive the canonical AVOW id's hex form via the helper itself,
     // so we don't drift if the underlying byte representation changes.
     const lgtHex = tokenIdToHex(LGT_TOKEN_ID)
     expect(lgtHex).toMatch(/^[0-9a-f]{64}$/)

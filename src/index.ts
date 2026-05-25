@@ -21,7 +21,7 @@
  *   privateKey: sender.privateKeyHex,
  *   publicKey: sender.publicKey,
  *   to: 'lig1...',
- *   amountNano: 1_000_000_000n,         // 1 LGT
+ *   amountNano: 1_000_000_000n,         // 1 AVOW
  *   tokenId: '<32-byte hex>',
  *   nonce,
  *   chainId: 4242n,

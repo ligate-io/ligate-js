@@ -54,7 +54,7 @@ import {
 // existing live-chain smoke.
 const DEV_KEY_HEX = '01'.repeat(32)
 const RECIPIENT = 'lig132yw8ht5p8cetl2jmvknewjawt9xwzdlrk2pyxlnwjyqz3m499u'
-const AMOUNT_NANO = 1_000_000_000n // 1 LGT
+const AMOUNT_NANO = 1_000_000_000n // 1 AVOW
 const NONCE = 0n
 const CHAIN_ID = 4242n
 const CHAIN_HASH = 'lsch1amq80arndh6zehd4gu3kg6x66vh3l45z924dr6pzeevkxp649heqe5c70v'

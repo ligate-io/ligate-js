@@ -22,7 +22,7 @@
  *
  * `--from FILE` (optional): JSON keypair as written by
  * `examples/generate-keypair.ts --out`. If omitted, uses the
- * localnet dev key (32 bytes of `0x01`, pre-funded with 10000 LGT in
+ * localnet dev key (32 bytes of `0x01`, pre-funded with 10000 AVOW in
  * `ligate-chain/devnet/genesis/bank.json`).
  *
  * ## Environment
@@ -31,7 +31,7 @@
  * |---|---|---|
  * | `LIGATE_RPC` | `http://localhost:12346` | Chain RPC URL |
  * | `LIGATE_CHAIN_ID` | `4242` | Numeric `CHAIN_ID` (see `constants.toml`) |
- * | `LIGATE_TOKEN_ID` | localnet $LGT bech32m | Token id to transfer |
+ * | `LIGATE_TOKEN_ID` | localnet AVOW bech32m | Token id to transfer |
  */
 
 import { readFileSync } from 'node:fs'
@@ -42,7 +42,7 @@ import { keypairFromPrivateKey, LigateClient, submitTransfer } from '../src/inde
 // Localnet dev key constants (per `ligate-chain/devnet/local-dev-key.json`).
 const DEV_KEY_HEX = '0101010101010101010101010101010101010101010101010101010101010101'
 
-// Localnet $LGT token id from `ligate-chain/devnet/genesis/bank.json`.
+// Localnet AVOW token id from `ligate-chain/devnet/genesis/bank.json`.
 const DEFAULT_TOKEN_ID = 'token_1nyl0e0yweragfsatygt24zmd8jrr2vqtvdfptzjhxkguz2xxx3vs0y07u7'
 
 const RPC_URL = process.env.LIGATE_RPC || 'http://localhost:12346'
@@ -84,7 +84,7 @@ function parseArgs(argv: string[]): Args {
     process.exit(2)
   }
   if (!amountLgt || amountLgt <= 0) {
-    console.error('--amount <LGT> is required and must be > 0')
+    console.error('--amount <AVOW> is required and must be > 0')
     printUsage()
     process.exit(2)
   }
@@ -92,13 +92,13 @@ function parseArgs(argv: string[]): Args {
 }
 
 function printUsage(): void {
-  console.error(`usage: transfer --to <address> --amount <LGT> [--from FILE]
+  console.error(`usage: transfer --to <address> --amount <AVOW> [--from FILE]
 
 Build + sign + submit a transfer on Ligate Chain.
 
 Required:
   --to ADDRESS    Recipient (bech32m \`lig1...\`).
-  --amount LGT    Amount in whole LGT (e.g. 1, 0.5).
+  --amount AVOW    Amount in whole AVOW (e.g. 1, 0.5).
 
 Optional:
   --from FILE     Sender keypair JSON (default: the localnet dev key).
@@ -124,7 +124,7 @@ async function main(): Promise<void> {
     console.log(`Loaded sender key from ${from}`)
   } else {
     senderPrivateKeyHex = DEV_KEY_HEX
-    console.log('Using localnet dev key (pre-funded with 10000 LGT).')
+    console.log('Using localnet dev key (pre-funded with 10000 AVOW).')
   }
 
   const sender = keypairFromPrivateKey(senderPrivateKeyHex)
@@ -142,20 +142,20 @@ async function main(): Promise<void> {
     client.getBalance(to, TOKEN_ID),
   ])
   console.log(`Nonce:            ${nonce}`)
-  console.log(`Sender balance:   ${formatLgt(senderBalance)} LGT`)
-  console.log(`Recipient before: ${formatLgt(recipientBalanceBefore)} LGT`)
+  console.log(`Sender balance:   ${formatLgt(senderBalance)} AVOW`)
+  console.log(`Recipient before: ${formatLgt(recipientBalanceBefore)} AVOW`)
 
-  // 1 LGT = 1_000_000_000 nano.
+  // 1 AVOW = 1_000_000_000 nano.
   const amountNano = BigInt(Math.round(amountLgt * 1_000_000_000))
 
   if (senderBalance < amountNano) {
     throw new Error(
-      `insufficient balance: ${formatLgt(senderBalance)} LGT available, ` +
-        `${amountLgt} LGT requested`,
+      `insufficient balance: ${formatLgt(senderBalance)} AVOW available, ` +
+        `${amountLgt} AVOW requested`,
     )
   }
 
-  console.log(`Submitting transfer: ${amountLgt} LGT -> ${to}`)
+  console.log(`Submitting transfer: ${amountLgt} AVOW -> ${to}`)
   const result = await submitTransfer({
     rpcUrl: RPC_URL,
     privateKey: senderPrivateKeyHex,
@@ -173,9 +173,9 @@ async function main(): Promise<void> {
 
   if (result.included) {
     const recipientBalanceAfter = await client.getBalance(to, TOKEN_ID)
-    console.log(`Recipient after: ${formatLgt(recipientBalanceAfter)} LGT`)
+    console.log(`Recipient after: ${formatLgt(recipientBalanceAfter)} AVOW`)
     console.log(
-      `Delta:           +${formatLgt(recipientBalanceAfter - recipientBalanceBefore)} LGT`,
+      `Delta:           +${formatLgt(recipientBalanceAfter - recipientBalanceBefore)} AVOW`,
     )
   } else {
     console.log('(tx queued but not yet included; check the explorer)')

@@ -67,7 +67,7 @@ describe('encodeAddress / decodeAddress', () => {
 
 describe('localnet dev key (chain #247)', () => {
   // Deterministic seed used by `devnet/local-dev-key.json`. Pre-funded
-  // with 10000 LGT in the localnet genesis.
+  // with 10000 AVOW in the localnet genesis.
   const DEV_PRIVATE_KEY = '01'.repeat(32)
   const EXPECTED_ADDRESS = 'lig132yw8ht5p8cetl2jmvknewjawt9xwzdlrk2pyxlnwjyqz3m499u'
 

@@ -41,7 +41,7 @@ const result = await submitTransfer({
   privateKey: sender.privateKeyHex,
   publicKey: sender.publicKey,
   to: 'lig1xyz...',
-  amountNano: 1_000_000_000n, // 1 LGT
+  amountNano: 1_000_000_000n, // 1 AVOW
   // tokenId accepts hex, Uint8Array, or `token_1...` bech32m form;
   // both signing and getBalance normalise internally.
   tokenId: 'token_1nyl0e0yweragfsatygt24zmd8jrr2vqtvdfptzjhxkguz2xxx3vs0y07u7',
@@ -155,7 +155,7 @@ Three runnable scripts in `examples/` demonstrate the public surface:
 pnpm tsx examples/generate-keypair.ts
 pnpm tsx examples/generate-keypair.ts --out my-key.json
 
-# Build + sign + submit a 1 LGT transfer to a recipient. Uses the
+# Build + sign + submit a 1 AVOW transfer to a recipient. Uses the
 # localnet dev key by default; pass --from to use a generated keypair.
 # Requires a running localnet (see end-to-end section below).
 pnpm tsx examples/transfer.ts \

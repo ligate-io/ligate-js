@@ -16,7 +16,7 @@
 import { bytesToHex } from './keys.js'
 import { tokenIdToBech32m } from './token.js'
 
-/** Default per-tx fee envelope (nano-LGT). 0.1 LGT — generous for devnet. */
+/** Default per-tx fee envelope (nano-AVOW). 0.1 AVOW — generous for devnet. */
 export const DEFAULT_MAX_FEE_NANO = 100_000_000n
 
 /** Shape of `GET /v1/rollup/info`. */
@@ -127,9 +127,9 @@ export class LigateClient {
   }
 
   /**
-   * Fetch the `$LGT`-equivalent balance of `address` for `tokenId`.
+   * Fetch the `AVOW`-equivalent balance of `address` for `tokenId`.
    *
-   * Returns the amount in nano-LGT. Returns `0n` if the chain has no
+   * Returns the amount in nano-AVOW. Returns `0n` if the chain has no
    * record of the address holding that token.
    *
    * `tokenId` accepts the same three forms as [`signTransfer`]: 64-char

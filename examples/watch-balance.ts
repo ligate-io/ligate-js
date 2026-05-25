@@ -20,7 +20,7 @@
  * | Var | Default | What |
  * |---|---|---|
  * | `LIGATE_RPC` | `http://localhost:12346` | Chain RPC URL |
- * | `LIGATE_TOKEN_ID` | localnet $LGT bech32m | Token id to watch |
+ * | `LIGATE_TOKEN_ID` | localnet AVOW bech32m | Token id to watch |
  */
 
 import process from 'node:process'
@@ -117,13 +117,13 @@ async function main(): Promise<void> {
       const ts = new Date().toISOString().slice(11, 19) // HH:MM:SS
       const balanceStr = formatLgt(balance)
       if (previous === null) {
-        console.log(`[${ts}] tick=${tick} balance=${balanceStr} LGT`)
+        console.log(`[${ts}] tick=${tick} balance=${balanceStr} AVOW`)
       } else {
         const delta = balance - previous
         const sign = delta >= 0n ? '+' : '-'
         const deltaAbs = delta < 0n ? -delta : delta
         const deltaStr = delta === 0n ? '0' : `${sign}${formatLgt(deltaAbs)}`
-        console.log(`[${ts}] tick=${tick} balance=${balanceStr} LGT (delta=${deltaStr})`)
+        console.log(`[${ts}] tick=${tick} balance=${balanceStr} AVOW (delta=${deltaStr})`)
       }
       previous = balance
     } catch (e) {
