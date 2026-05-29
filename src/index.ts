@@ -126,6 +126,74 @@ export type {
   SignSubmitAttestationParams,
 } from './attestation.js'
 
+// Bounty marketplace runtime-call builders.
+export {
+  RUNTIME_BOUNTY_DISC,
+  POST_BOUNTY_DISC,
+  CLAIM_BOUNTY_DISC,
+  DISPUTE_ATTESTATION_DISC,
+  RESOLVE_DISPUTE_DISC,
+  CANCEL_BOUNTY_DISC,
+  FINALISE_BOUNTY_DISC,
+  BOUNTY_HRP,
+  BOUNTY_ID_BYTE_LENGTH,
+  MAX_PAYLOAD_HASHES,
+  MAX_CLAIMS_PER_CALL,
+  encodeBountyId,
+  decodeBountyId,
+  signPostBounty,
+  signClaimBounty,
+  signDisputeAttestation,
+  signResolveDispute,
+  signCancelBounty,
+  signFinaliseBounty,
+} from './bounty.js'
+export type {
+  AcceptancePredicate,
+  DisputeGround,
+  DisputeDecision,
+  SignPostBountyParams,
+  SignClaimBountyParams,
+  SignDisputeAttestationParams,
+  SignResolveDisputeParams,
+  SignBountyIdParams,
+} from './bounty.js'
+
+// Contract (work-for-hire) runtime-call builders.
+export {
+  RUNTIME_CONTRACTS_DISC,
+  POST_CONTRACT_DISC,
+  COMMIT_TO_CONTRACT_DISC,
+  DELIVER_CONTRACT_DISC,
+  ACCEPT_DELIVERY_DISC,
+  REJECT_DELIVERY_DISC,
+  RESOLVE_CONTRACT_DISPUTE_DISC,
+  CANCEL_CONTRACT_DISC,
+  FINALIZE_DELIVERY_DISC,
+  CONTRACT_HRP,
+  CONTRACT_ID_BYTE_LENGTH,
+  encodeContractId,
+  decodeContractId,
+  signPostContract,
+  signCommitToContract,
+  signDeliverContract,
+  signAcceptDelivery,
+  signRejectDelivery,
+  signResolveContractDispute,
+  signCancelContract,
+  signFinalizeDelivery,
+} from './contract.js'
+export type {
+  ContractDisputeGround,
+  ContractDisputeDecision,
+  SignPostContractParams,
+  SignCommitToContractParams,
+  SignDeliverContractParams,
+  SignRejectDeliveryParams,
+  SignResolveContractDisputeParams,
+  SignContractIdParams,
+} from './contract.js'
+
 // HTTP client.
 export { LigateClient, appendV1, DEFAULT_MAX_FEE_NANO } from './client.js'
 export type { LigateClientOptions, RollupInfo, CoinsResponse } from './client.js'

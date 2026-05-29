@@ -282,6 +282,51 @@ export class LigateClient {
     return this.getJson<T>(`/attestors/${pubkey}/attestations${formatQuery(params)}`)
   }
 
+  /**
+   * Page through the indexer's bounties list.
+   *
+   * Talks to ligate-api's `GET /v1/bounties`. Response shape is
+   * `{ data: [...], pagination: { next, limit } }`. `status` filters by
+   * lifecycle state (`open` / `exhausted` / `expired` / `cancelled` /
+   * `finalised`) when the indexer supports it.
+   */
+  async listBounties<T = unknown>(
+    params: { limit?: number; before?: string; status?: string } = {},
+  ): Promise<T> {
+    return this.getJson<T>(`/bounties${formatQuery(params)}`)
+  }
+
+  /**
+   * Fetch a single bounty by id.
+   *
+   * `id` accepts the bech32m `lbt1...` form (canonical) or 64-char hex.
+   */
+  async getBounty<T = unknown>(id: string): Promise<T> {
+    return this.getJson<T>(`/bounties/${id}`)
+  }
+
+  /**
+   * Page through the indexer's contracts list.
+   *
+   * Talks to ligate-api's `GET /v1/contracts`. Response shape is
+   * `{ data: [...], pagination: { next, limit } }`. `status` filters by
+   * lifecycle state when the indexer supports it.
+   */
+  async listContracts<T = unknown>(
+    params: { limit?: number; before?: string; status?: string } = {},
+  ): Promise<T> {
+    return this.getJson<T>(`/contracts${formatQuery(params)}`)
+  }
+
+  /**
+   * Fetch a single contract by id.
+   *
+   * `id` accepts the bech32m `lct1...` form (canonical) or 64-char hex.
+   */
+  async getContract<T = unknown>(id: string): Promise<T> {
+    return this.getJson<T>(`/contracts/${id}`)
+  }
+
   // ---- Low-level escape hatches --------------------------------------------
 
   /**
