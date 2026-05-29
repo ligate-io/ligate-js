@@ -230,7 +230,7 @@ export function decodePubKey(s: string): Uint8Array {
  * Used internally by `sign*` builders so callers can pass any of
  * the three forms.
  */
-function idToBytes(value: string | Uint8Array, hrp: string): Uint8Array {
+export function idToBytes(value: string | Uint8Array, hrp: string): Uint8Array {
   if (value instanceof Uint8Array) {
     if (value.length !== ATTESTATION_ID_BYTE_LENGTH) {
       throw new Error(`expected ${ATTESTATION_ID_BYTE_LENGTH}-byte id, got ${value.length}`)
