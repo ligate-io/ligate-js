@@ -16,7 +16,7 @@ npm install @ligate-labs/sdk
 yarn add @ligate-labs/sdk
 ```
 
-Latest published version: `0.2.0` (the `latest` dist-tag), wire-compatible with `ligate-chain` v0.2.0 → v0.2.3 (current). The lat1 `AttestationId` wire format from v0.2.0 still holds; v0.2.1/v0.2.2/v0.2.3 were additive non-breaking chain patches (openapi info, batch `da_block_height`) — the SDK doesn't need a republish to consume them. Pin to `^0.2.0` for minor-bump compatibility. The historical `rc` dist-tag points at `0.1.1-devnet`, which is pre-lat1 and wire-incompatible with current devnet; avoid pinning to `@rc`. Local checkouts work via `pnpm add file:../ligate-js` if you're contributing.
+Latest published version: `0.3.0` (the `latest` dist-tag), wire-compatible with `ligate-chain` v0.4.0 (current). v0.3.0 adds builders + query methods for the two new modules in chain v0.4.0 (`bounty` and `contract`), picks up the `LGT` → `AVOW` token-symbol rename from chain v0.3.0, and tracks the `ligate-devnet-2` → `ligate-devnet-3` cutover. The `lat1` `AttestationId` wire format from v0.2.0 still holds; intermediate chain v0.2.x / v0.3.x rungs were additive on the wire (the SDK simply didn't have a release on each). Pin to `^0.3.0` for minor-bump compatibility. The historical `rc` dist-tag points at `0.1.1-devnet`, which is pre-lat1 and wire-incompatible with current devnet; avoid pinning to `@rc`. Local checkouts work via `pnpm add file:../ligate-js` if you're contributing.
 
 ### Use
 
@@ -203,15 +203,15 @@ The chain-side test vector is the localnet dev key (`devnet/local-dev-key.json`,
 
 ## Status
 
-**Devnet.** `ligate-devnet-2` is live.
+**Devnet.** `ligate-devnet-3` is live.
 
-Latest release: [`v0.2.0`](https://github.com/ligate-io/ligate-js/releases/tag/v0.2.0), published to npm as `@ligate-labs/sdk@0.2.0` (the `latest` dist-tag), wire-compatible with `ligate-chain` v0.2.0 → v0.2.3 (additive chain patches don't require an SDK republish; lat1 wire format is the wire contract).
+Latest release: [`v0.3.0`](https://github.com/ligate-io/ligate-js/releases/tag/v0.3.0), published to npm as `@ligate-labs/sdk@0.3.0` (the `latest` dist-tag), wire-compatible with `ligate-chain` v0.4.0. Adds `bounty` and `contract` module builders + query methods, picks up the `AVOW` token-symbol rename, follows the devnet-2 → devnet-3 cutover.
 
 ### Versioning
 
-Plain semver, no network-name suffix on the package version. Per the convention in [`ligate-chain#374`](https://github.com/ligate-io/ligate-chain/pull/374), network identity lives in `chain_id` (`ligate-devnet-2`, future `ligate-testnet-1` / `ligate-mainnet-1`), not in the package version. Past `-devnet` tags (`v0.1.0-devnet`, `v0.1.1-devnet`) stay as archaeology.
+Plain semver, no network-name suffix on the package version. Per the convention in [`ligate-chain#374`](https://github.com/ligate-io/ligate-chain/pull/374), network identity lives in `chain_id` (`ligate-devnet-3`, future `ligate-testnet-1` / `ligate-mainnet-1`), not in the package version. Past `-devnet` tags (`v0.1.0-devnet`, `v0.1.1-devnet`) stay as archaeology.
 
-Pre-1.0 (`v0.x.y`) is "may break in minor versions". v0.2.0 in particular collapsed `AttestationId` from compound `<schema_id>:<payload_hash>` to single bech32m `lat1...`; consumers pinning `^0.1.0` will NOT auto-upgrade to v0.2.0 and need to bump intentionally. After v1.0, minor bumps are guaranteed wire-compatible.
+Pre-1.0 (`v0.x.y`) is "may break in minor versions". v0.2.0 collapsed `AttestationId` from compound `<schema_id>:<payload_hash>` to single bech32m `lat1...`. v0.3.0 is additive on the wire (new module builders + queries) but pairs with chain v0.4.0; consumers pinning `^0.2.0` will NOT auto-upgrade to v0.3.0 and need to bump intentionally to talk to a v0.4.0 chain. After v1.0, minor bumps are guaranteed wire-compatible.
 
 ## Related repos
 

@@ -4,6 +4,42 @@
  * Wraps the chain's REST surface (`/v1/...`) so callers don't have to
  * remember exact paths, response shapes, or the `/v1` prefix dance.
  *
+ * ## Two read tiers, one base URL
+ *
+ * The read methods on this client split into two tiers, each served by
+ * a different process behind the same `/v1` mount:
+ *
+ * **Chain-direct** (served by the chain node). Current state, low
+ * latency, no indexer dependency. Safe to call from wallets / signers
+ * that need the canonical truth right now:
+ *
+ * - [`getRollupInfo`] — `/rollup/info`
+ * - [`getNonce`] — `/rollup/addresses/{id}/dedup`
+ * - [`getBalance`] — `/modules/bank/tokens/{tid}/balances/{addr}`
+ * - The write path: `POST /v1/sequencer/txs` (used by [`submitRawTx`])
+ *
+ * **Indexer-direct** (served by ligate-api). History, list pagination,
+ * filtered lookups, projected response shapes denormalised with tx
+ * hash + block height + timestamps. The chain itself has no list /
+ * history endpoints, so anything paginated has to land here:
+ *
+ * - `/blocks*`, `/txs*`, `/addresses/{addr}` summaries
+ * - `/schemas*`, `/attestor-sets*`, `/attestations*`, `/attestors/{pk}/attestations`
+ * - `/bounties*`, `/contracts*`
+ *
+ * In production, `rpcUrl` typically points at a deployment that
+ * fans out to both tiers behind a reverse proxy (so the same base URL
+ * serves chain-direct + indexer paths transparently). In a chain-only
+ * localnet, indexer-direct methods will 404 — point `rpcUrl` at a
+ * `ligate-api` deployment that's wired up against the chain to use
+ * them. Listed apart in the source below for clarity.
+ *
+ * The escape hatch [`getJson`] / [`getRaw`] is available for routes
+ * not yet covered by typed methods — use the same `/v1`-prefixed path
+ * either tier accepts.
+ *
+ * ## URL prefix handling
+ *
  * **The `/v1` prefix is auto-appended** to whatever URL the caller
  * passes to [`LigateClient`]. The chain mounts every public route
  * under `/v1/` (chain #149), but the SDK's `Submitter::new` probes
@@ -66,7 +102,10 @@ export interface LigateClientOptions {
  * Read-only HTTP client for Ligate Chain.
  *
  * Construct once per RPC endpoint and reuse. Methods are stateless;
- * each call hits the chain freshly.
+ * each call hits the configured endpoint freshly.
+ *
+ * See the module-level doc for the chain-direct vs indexer-direct
+ * split that governs which methods talk to which tier.
  */
 export class LigateClient {
   /** RPC base, with `/v1` already appended. */
@@ -151,20 +190,17 @@ export class LigateClient {
     return BigInt(body.amount)
   }
 
-  // ---- Indexer query methods ----------------------------------------------
+  // ---- Indexer-direct query methods ---------------------------------------
   //
-  // These methods talk to ligate-api's `/v1/blocks*`, `/v1/txs*`,
-  // `/v1/addresses/*`, `/v1/schemas*`, `/v1/attestor-sets/*` surface
-  // (see `ligate-io/ligate-api`). Point `rpcUrl` at a ligate-api
-  // deployment, not the chain directly — the chain's `/v1/...` exposes
-  // a different surface (sequencer/ledger/rollup) and these methods
-  // would 404 against it.
+  // These methods are part of the indexer-direct tier described in the
+  // module-level doc-comment. They're served by ligate-api (not the
+  // chain node directly), so in a chain-only localnet they will 404 —
+  // point `rpcUrl` at a `ligate-api` deployment to use them.
   //
-  // Return types are intentionally generic (`<T = unknown>` so callers
-  // can narrow). The ligate-api response shapes aren't fully pinned yet
-  // (the v0 indexer ships placeholders returning 501); these methods
-  // will gain concrete return types once the indexer's Postgres schema
-  // and serializers stabilise. Tracked at
+  // Return types are intentionally generic (`<T = unknown>`) so callers
+  // can narrow. The ligate-api response shapes are stabilising; these
+  // methods will gain concrete return types once the indexer's
+  // Postgres schema and serializers fully pin down. Tracked at
   // https://github.com/ligate-io/ligate-api/issues/1.
 
   /**

@@ -13,9 +13,42 @@ Release body. Keep section headings in the format `## [X.Y.Z] - YYYY-MM-DD`.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-21
+
+Pairs with [`ligate-chain` v0.4.0](https://github.com/ligate-io/ligate-chain/releases/tag/v0.4.0) and the `ligate-devnet-3` cutover. Adds builders + query methods for the two new chain modules (`bounty` and `contract`), folds the `LGT` → `AVOW` token-symbol rename from chain v0.3.0, and clarifies the two-tier read surface at the class-doc level. No wire-format changes for previously-shipped surfaces; consumers pinning `^0.2.0` will NOT auto-upgrade and need to bump intentionally to talk to a v0.4.0 chain.
+
+Install: `npm install @ligate-labs/sdk@0.3.0`.
+
+### Added
+
+- `bounty` runtime-call builders: `signPostBounty`, `signClaimBounty`, `signDisputeBounty`, `signResolveBounty`, `signCancelBounty`. Borsh layout pinned against `ligate-chain/crates/bootstrap-cli/examples/disc_probe.rs`. Mirrors the chain handlers shipped in [`chain#532`](https://github.com/ligate-io/ligate-chain/pull/532).
+- `contract` runtime-call builders: `signPostContract`, `signCommitContract`, `signDeliverContract`, `signAcceptContract`, `signRejectContract`, `signResolveContract`, `signCancelContract`. Named-arbiter dispute flow from [`chain#538`](https://github.com/ligate-io/ligate-chain/pull/538) + the chain_state-driven expiry / auto-accept from [`chain#541`](https://github.com/ligate-io/ligate-chain/pull/541).
+- `LigateClient` indexer-direct query methods: `listBounties` / `getBounty`, `listContracts` / `getContract`. Returns indexer-projected shapes via ligate-api once [`ligate-api#78`](https://github.com/ligate-io/ligate-api/pull/78) (event ingestion) + [`ligate-api#80`](https://github.com/ligate-io/ligate-api/pull/80) (wire types) land.
+- Class-doc on `LigateClient` now states the contract-level split between **chain-direct** methods (`/rollup/*`, `/modules/bank/*`, write path) and **indexer-direct** methods (everything paginated / projected). Helps consumers reason about latency, availability, and what to point `rpcUrl` at for which tier.
+
 ### Changed
 
-- **Renamed token symbol `LGT` → `AVOW` everywhere.** Tracks [`ligate-chain#457`](https://github.com/ligate-io/ligate-chain/issues/457) and aligns with [chain v0.3.0](https://github.com/ligate-io/ligate-chain/releases/tag/v0.3.0). Substitutions cover prose, doc comments, example code, README quickstart, and internal helpers. `$` prefix dropped per the cleaner convention adopted chain-side. **Breaking on the wire**: requires the api side to ship its rename first. Holds for the same cutover window as chain v0.3.0 → devnet-2 boot + [ligate-api#70](https://github.com/ligate-io/ligate-api/pull/70).
+- **Renamed token symbol `LGT` → `AVOW` everywhere.** Tracks [`ligate-chain#457`](https://github.com/ligate-io/ligate-chain/issues/457) and aligns with [chain v0.3.0](https://github.com/ligate-io/ligate-chain/releases/tag/v0.3.0). Substitutions cover prose, doc comments, example code, README quickstart, and internal helpers. `$` prefix dropped per the cleaner convention adopted chain-side. Paired with [`ligate-api#70`](https://github.com/ligate-io/ligate-api/pull/70). (#44)
+- README + status references flipped from `ligate-devnet-2` to `ligate-devnet-3` per the chain v0.4.0 cutover ([`chain#546`](https://github.com/ligate-io/ligate-chain/pull/546)). Past `devnet-1` / `devnet-2` mentions remain in archival changelog/blog entries.
+
+## [0.2.0] - 2026-05-17
+
+Pairs with [`ligate-chain` v0.2.0](https://github.com/ligate-io/ligate-chain/releases/tag/v0.2.0). Collapses `AttestationId` from the prior compound `<schema_id>:<payload_hash>` (`lsc1...:lph1...`) display form to a single 32-byte bech32m hash with HRP `lat`, mirroring [`chain#381`](https://github.com/ligate-io/ligate-chain/pull/381). The two components remain recoverable from the stored attestation record (the chain keeps `schema_id` and `payload_hash` as fields), so existing callers can keep deriving the id offline if they need it before submission.
+
+First SDK release on clean semver. The `-devnet` suffix is dropped going forward (per the `ligate-chain` v0.1.2 convention); network identity lives in the chain's `chain_id`, not in the SDK version.
+
+Install: `npm install @ligate-labs/sdk@0.2.0`.
+
+### Added
+
+- `ATTESTATION_HRP = 'lat'` constant + `encodeAttestationId` / `decodeAttestationId` helpers. Mirrors the existing `lsc` / `las` / `lph` / `lpk` bech32m helpers so consumers can move 32-byte attestation ids in and out of the canonical string form without rolling their own bech32m. (#38)
+- `computeAttestationId(schemaId, payloadHash)`. Deterministically derives the on-chain id via `SHA-256(schema_id || payload_hash)` on the raw 32-byte components, mirroring `attestation::AttestationId::from_pair` on the chain side. Pinned to the chain's borsh-snapshot test vector (`[0x11; 32]`, `[0x33; 32]` → `b0dcb09a...` → `lat1krwtpxh...`) so any future drift from the chain's derivation breaks CI here. (#38)
+- `attestationIdToHex` now recognises the `lat` HRP alongside the existing four. (#38)
+
+### Changed
+
+- `package.json` version bump to `0.2.0` (clean semver, no `-devnet` suffix).
+- README install snippet corrected (npm publish status, Signer API, versioning note). (#39, #40)
 
 ## [0.1.1-devnet] - 2026-05-16
 
